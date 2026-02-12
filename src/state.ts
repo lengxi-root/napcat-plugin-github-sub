@@ -34,7 +34,6 @@ class PluginState {
 
   debug (msg: string): void {
     if (this.config.debug) {
-      this.logger?.info(`[GitHub Sub] [DEBUG] ${msg}`);
       this.pushLog('debug', msg);
     }
   }

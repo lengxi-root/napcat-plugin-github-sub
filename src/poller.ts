@@ -278,7 +278,7 @@ export async function poll (): Promise<void> {
 
 /** 启动轮询 */
 export function startPoller (): void {
-  const sec = Math.max(pluginState.config.interval || 30, 2);
+  const sec = Math.max(pluginState.config.interval || 30, 5);
   pluginState.log('info', `轮询已启动，间隔 ${sec} 秒，共 ${pluginState.config.subscriptions.length} 个订阅`);
   pluginState.setPollTimer(setInterval(() => poll().catch(() => { }), sec * 1000));
 }

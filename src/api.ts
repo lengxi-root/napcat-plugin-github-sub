@@ -36,7 +36,7 @@ export function registerApiRoutes (router: any): void {
     if (body.apiBase !== undefined) pluginState.config.apiBase = String(body.apiBase);
     if (body.interval !== undefined) {
       const n = Number(body.interval);
-      if (n >= 2) pluginState.config.interval = n;
+      if (n >= 5) pluginState.config.interval = n;
     }
     if (body.debug !== undefined) pluginState.config.debug = Boolean(body.debug);
     if (body.owners !== undefined && Array.isArray(body.owners)) {
