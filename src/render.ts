@@ -163,21 +163,25 @@ function fileDiffHTML (file: { filename: string; status: string; additions: numb
 
 /** 生成 Commits HTML（含 diff） */
 function commitsHTML (repo: string, commits: CommitData[]): string {
-  const rows = commits.map(c => {
+  // 多 commit 时限制显示数量，避免图片过大
+  const showCommits = commits.slice(0, 5);
+  const restCommits = commits.length - showCommits.length;
+  const rows = showCommits.map(c => {
     const msg = esc(truncate(c.commit.message.split('\n')[0], 80));
     const author = esc(c.commit.author.name);
     const sha = c.sha.slice(0, 7);
     const time = fmtTime(c.commit.author.date);
     let diffHtml = '';
     if (c.files && c.files.length) {
-      const show = c.files.slice(0, 5);
+      const show = c.files.slice(0, 3);
       const rest = c.files.length - show.length;
       diffHtml = show.map(f => fileDiffHTML(f)).join('');
-      if (rest > 0) diffHtml += `<div class="diff-more">还有 ${rest} 个文件变更，请进入项目中查阅</div>`;
+      if (rest > 0) diffHtml += `<div class="diff-more">还有 ${rest} 个文件变更</div>`;
     }
     return `<div class="item"><div class="item-header"><span class="sha">${sha}</span><span class="author">${author}</span><span class="time">${time}</span></div><div class="msg">${msg}</div>${diffHtml}</div>`;
   }).join('');
-  return wrapHTML(repo, 'Commits', '#2ea44f', SVG.commit, commits.length, rows);
+  const extra = restCommits > 0 ? `<div class="diff-more">还有 ${restCommits} 条 commit，请前往 GitHub 查看</div>` : '';
+  return wrapHTML(repo, 'Commits', '#2ea44f', SVG.commit, commits.length, rows + extra);
 }
 
 /** 动作标签映射 */
@@ -248,22 +252,67 @@ function mdActionTag (action?: string, state?: string): string {
 }
 
 /** 简易 Markdown body → HTML（处理代码块、引用、列表等） */
-function mdBodyToHTML (raw: string | null, maxLen = 200): string {
+function mdBodyToHTML (raw: string | null, maxLen = 3000): string {
   if (!raw) return '';
-  let s = raw.length > maxLen ? raw.slice(0, maxLen) + '...' : raw;
-  // 代码块 ```...```
-  s = s.replace(/```[\s\S]*?```/g, m => {
-    const code = m.replace(/^```\w*\n?/, '').replace(/\n?```$/, '');
-    return `<code>${esc(code)}</code>`;
+  let s = raw.length > maxLen ? raw.slice(0, maxLen) + '\n\n...(内容过长已截断)' : raw;
+
+  // 保存代码块，避免被后续处理干扰
+  const codeBlocks: string[] = [];
+  s = s.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    const idx = codeBlocks.length;
+    codeBlocks.push(`<pre style="background:rgba(110,118,129,.1);border:1px solid rgba(110,118,129,.2);border-radius:6px;padding:8px 12px;font-family:monospace;font-size:11px;line-height:1.6;overflow-x:auto;white-space:pre-wrap;word-break:break-all;margin:6px 0">${esc(code.trim())}</pre>`);
+    return `\x00CB${idx}\x00`;
   });
-  // 行内代码
-  s = s.replace(/`([^`]+)`/g, (_, c) => `<code>${esc(c)}</code>`);
-  // 转义其余 HTML
-  s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  // 恢复我们生成的 code 标签
-  s = s.replace(/&lt;code&gt;/g, '<code>').replace(/&lt;\/code&gt;/g, '</code>');
+
+  // 保存行内代码
+  const inlineCodes: string[] = [];
+  s = s.replace(/`([^`\n]+)`/g, (_, code) => {
+    const idx = inlineCodes.length;
+    inlineCodes.push(`<code style="background:rgba(110,118,129,.15);padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px">${esc(code)}</code>`);
+    return `\x00IC${idx}\x00`;
+  });
+
+  // 转义 HTML
+  s = esc(s);
+
+  // 标题 ### / ## / #
+  s = s.replace(/^#{3}\s+(.+)$/gm, '<div style="font-size:13px;font-weight:600;margin:10px 0 4px;border-bottom:1px solid rgba(110,118,129,.2);padding-bottom:3px">$1</div>');
+  s = s.replace(/^#{2}\s+(.+)$/gm, '<div style="font-size:14px;font-weight:700;margin:12px 0 4px;border-bottom:1px solid rgba(110,118,129,.2);padding-bottom:3px">$1</div>');
+  s = s.replace(/^#{1}\s+(.+)$/gm, '<div style="font-size:15px;font-weight:700;margin:14px 0 6px;border-bottom:1px solid rgba(110,118,129,.3);padding-bottom:4px">$1</div>');
+
+  // 加粗 **text**
+  s = s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  // 斜体 *text* 或 _text_
+  s = s.replace(/\*(.+?)\*/g, '<i>$1</i>');
+  s = s.replace(/_(.+?)_/g, '<i>$1</i>');
+  // 删除线 ~~text~~
+  s = s.replace(/~~(.+?)~~/g, '<s>$1</s>');
+
+  // 无序列表 - item
+  s = s.replace(/^[-*]\s+(.+)$/gm, '<div style="padding-left:16px">• $1</div>');
+  // 有序列表 1. item
+  s = s.replace(/^\d+\.\s+(.+)$/gm, (_, content) => `<div style="padding-left:16px">· ${content}</div>`);
+
+  // GitHub emoji :name: → 移除冒号显示名称（服务器无 emoji 字体）
+  s = s.replace(/:([a-z0-9_+-]+):/g, '[$1]');
+
+  // 链接 [text](url)
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<span style="color:#58a6ff;text-decoration:underline">$1</span>');
+
+  // 引用 > text
+  s = s.replace(/^&gt;\s?(.+)$/gm, '<div style="padding:4px 12px;border-left:3px solid rgba(110,118,129,.3);color:rgba(139,148,158,1);margin:4px 0">$1</div>');
+
+  // 分隔线 ---
+  s = s.replace(/^-{3,}$/gm, '<hr style="border:none;border-top:1px solid rgba(110,118,129,.2);margin:8px 0">');
+
+  // 恢复代码块
+  s = s.replace(/\x00CB(\d+)\x00/g, (_, idx) => codeBlocks[Number(idx)] || '');
+  // 恢复行内代码
+  s = s.replace(/\x00IC(\d+)\x00/g, (_, idx) => inlineCodes[Number(idx)] || '');
+
   // 换行
   s = s.replace(/\n/g, '<br>');
+
   return s;
 }
 
