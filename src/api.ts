@@ -68,7 +68,7 @@ export function registerApiRoutes (router: any): void {
     if (existing) { res.json({ success: false, error: '该仓库已订阅' }); return; }
 
     const validTypes: EventType[] = (types || ['commits', 'issues', 'pulls']).filter(t =>
-      ['commits', 'issues', 'pulls'].includes(t)
+      ['commits', 'issues', 'pulls', 'actions'].includes(t)
     ) as EventType[];
 
     let branch = 'main';

@@ -1,5 +1,5 @@
 // 渲染模块 - 通过 puppeteer 插件截图 HTML 为 base64 图片
-import type { CommitData, IssueData, CommentData, ThemeColors } from './types';
+import type { CommitData, IssueData, CommentData, ActionRunData, ThemeColors } from './types';
 import { pluginState } from './state';
 
 /** 转义 HTML */
@@ -51,6 +51,8 @@ const SVG = {
   dotMerged: `<svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="#a371f7"/></svg>`,
   // comment icon (Octicons - comment-discussion)
   comment: `<svg width="20" height="20" viewBox="0 0 16 16" fill="#58a6ff"><path d="M1.75 1h8.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 10.25 10H7.061l-2.574 2.573A1.458 1.458 0 0 1 2 11.543V10h-.25A1.75 1.75 0 0 1 0 8.25v-5.5C0 1.784.784 1 1.75 1ZM1.5 2.75v5.5c0 .138.112.25.25.25h1a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h3.5a.25.25 0 0 0 .25-.25v-5.5a.25.25 0 0 0-.25-.25h-8.5a.25.25 0 0 0-.25.25Zm13 2a.25.25 0 0 0-.25-.25h-.5a.75.75 0 0 1 0-1.5h.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 14.25 12H14v1.543a1.458 1.458 0 0 1-2.487 1.03L9.22 12.28a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l2.22 2.22v-2.19a.75.75 0 0 1 .75-.75h1a.25.25 0 0 0 .25-.25Z"/></svg>`,
+  // actions icon (Octicons - play)
+  actions: `<svg width="20" height="20" viewBox="0 0 16 16" fill="#d29922"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm4.879-2.773 4.264 2.559a.25.25 0 0 1 0 .428l-4.264 2.559A.25.25 0 0 1 6 10.559V5.442a.25.25 0 0 1 .379-.215Z"/></svg>`,
 };
 
 /** 调用 puppeteer 插件渲染 HTML 为 base64 图片 */
@@ -155,7 +157,7 @@ function renderPatch (patch: string, maxChars: number): string {
 
 /** 生成单个文件的 diff HTML */
 function fileDiffHTML (file: { filename: string; status: string; additions: number; deletions: number; patch?: string; }): string {
-  const patchContent = file.patch ? renderPatch(file.patch, 300) : '<div style="color:#8b949e">（二进制文件或无变更内容）</div>';
+  const patchContent = file.patch ? renderPatch(file.patch, 3000) : '<div style="color:#8b949e">（二进制文件或无变更内容）</div>';
   return `<div class="diff-file"><div class="diff-name"><span>${esc(file.filename)}</span><span class="add">+${file.additions}</span><span class="del">-${file.deletions}</span></div><div class="diff-code">${patchContent}</div></div>`;
 }
 
@@ -295,16 +297,53 @@ function pullsHTML (repo: string, pulls: IssueData[]): string {
 
 /** 生成 Comments Markdown 风格 HTML */
 function commentsHTML (repo: string, comments: CommentData[]): string {
-  const rows = comments.map(c => {
-    const author = esc(c.user.login);
-    const time = fmtTime(c.created_at);
-    const title = esc(truncate(c.title, 60));
-    const srcLabel = c.source === 'pull_request' ? 'PR' : 'Issue';
-    const body = `<blockquote>${mdBodyToHTML(c.body, 3000)}</blockquote>`;
-    return `<h3><code>${srcLabel} #${c.number}</code> ${title}</h3>
-<p class="meta">@${author} 评论于 ${time}</p>${body}`;
+  // 按 Issue/PR 编号分组
+  const grouped = new Map<number, CommentData[]>();
+  for (const c of comments) {
+    const arr = grouped.get(c.number) || [];
+    arr.push(c);
+    grouped.set(c.number, arr);
+  }
+
+  const sections: string[] = [];
+  for (const [num, group] of grouped) {
+    const first = group[0];
+    const srcLabel = first.source === 'pull_request' ? 'PR' : 'Issue';
+    const title = esc(truncate(first.title, 60));
+    let html = `<h3><code>${srcLabel} #${num}</code> ${title} <span class="meta">(${group.length} 条评论)</span></h3>`;
+    for (const c of group) {
+      const author = esc(c.user.login);
+      const time = fmtTime(c.created_at);
+      const body = mdBodyToHTML(c.body, 3000);
+      html += `<p class="meta">@${author} · ${time}</p><blockquote>${body}</blockquote>`;
+    }
+    sections.push(html);
+  }
+
+  return wrapMarkdownHTML(repo, 'Comments', '#58a6ff', SVG.comment, comments.length, sections.join('<hr>'));
+}
+
+
+/** 生成 Actions Markdown 风格 HTML */
+function actionsHTML (repo: string, runs: ActionRunData[]): string {
+  const rows = runs.map(r => {
+    const name = esc(truncate(r.name, 60));
+    const actor = esc(r.actor.login);
+    const time = fmtTime(r.created_at);
+    const conclusion = r.conclusion || r.status;
+    const cMap: Record<string, { text: string; cls: string; }> = {
+      success: { text: '成功', cls: 'tag-open' },
+      failure: { text: '失败', cls: 'tag-closed' },
+      cancelled: { text: '已取消', cls: 'tag-reopened' },
+      in_progress: { text: '运行中', cls: 'tag-reopened' },
+      queued: { text: '排队中', cls: '' },
+    };
+    const c = cMap[conclusion] || { text: conclusion, cls: '' };
+    const tag = `<span class="tag ${c.cls}">${esc(c.text)}</span>`;
+    return `<h3><code>#${r.run_number}</code> ${name} ${tag}</h3>
+<p class="meta">@${actor} · ${esc(r.event)} · ${esc(r.head_branch)} · ${time}</p>`;
   }).join('<hr>');
-  return wrapMarkdownHTML(repo, 'Comments', '#58a6ff', SVG.comment, comments.length, rows);
+  return wrapMarkdownHTML(repo, 'Actions', '#d29922', SVG.actions, runs.length, rows);
 }
 
 /** 文本摘要（降级用） */
@@ -333,6 +372,20 @@ export function commentsSummary (repo: string, comments: CommentData[]): string 
     lines.push(`[${src}#${c.number}] ${c.user.login}: ${c.body.replace(/\n/g, ' ').slice(0, 60)}`);
   }
   return lines.join('\n');
+}
+
+export function actionsSummary (repo: string, runs: ActionRunData[]): string {
+  const lines = [`[${repo}] ${runs.length} 条 Actions 更新\n`];
+  for (const r of runs) {
+    const c = r.conclusion || r.status;
+    lines.push(`#${r.run_number} ${r.name} [${c}] - ${r.actor.login}`);
+  }
+  return lines.join('\n');
+}
+
+/** 渲染 Actions */
+export async function renderActions (repo: string, runs: ActionRunData[]): Promise<string | null> {
+  return renderToBase64(actionsHTML(repo, runs));
 }
 
 /** 自定义模板变量替换 */

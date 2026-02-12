@@ -1,6 +1,6 @@
 // GitHub 订阅插件类型定义
 
-export type EventType = 'commits' | 'issues' | 'pulls';
+export type EventType = 'commits' | 'issues' | 'pulls' | 'actions';
 
 export interface Subscription {
   /** 仓库全名 owner/repo */
@@ -140,4 +140,20 @@ export interface CommentData {
   html_url: string;
   /** 来源类型: issue / pull_request */
   source: 'issue' | 'pull_request';
+}
+
+/** GitHub Actions workflow run 数据 */
+export interface ActionRunData {
+  id: number;
+  name: string;
+  head_branch: string;
+  head_sha: string;
+  status: string;
+  conclusion: string | null;
+  html_url: string;
+  created_at: string;
+  updated_at: string;
+  actor: { login: string; avatar_url: string; };
+  event: string;
+  run_number: number;
 }

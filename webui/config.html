@@ -402,6 +402,16 @@
       color: var(--accentl)
     }
 
+    .type-actions {
+      background: rgba(210, 153, 34, .1);
+      color: #d29922
+    }
+
+    .dark .type-actions {
+      background: rgba(210, 153, 34, .12);
+      color: #e3b341
+    }
+
     .sidebar {
       width: 200px;
       flex-shrink: 0;
@@ -729,6 +739,8 @@
               class="chk"> Issues</label>
           <label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="edit-pulls"
               class="chk"> PRs</label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="edit-actions"
+              class="chk"> Actions</label>
 
         </div>
       </div>
@@ -1106,6 +1118,8 @@
                       id="add-issues" class="chk" checked> Issues</label>
                   <label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox"
                       id="add-pulls" class="chk" checked> Pull Requests</label>
+                  <label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox"
+                      id="add-actions" class="chk"> Actions</label>
                 </div>
               </div>
               <div style="margin-bottom:12px">
@@ -1529,6 +1543,7 @@
       if ($('add-commits').checked) types.push('commits');
       if ($('add-issues').checked) types.push('issues');
       if ($('add-pulls').checked) types.push('pulls');
+      if ($('add-actions').checked) types.push('actions');
       if (!types.length) { toast('请至少选择一种监控类型', 'error'); return; }
       const groups = addPicker ? addPicker.getSelected() : [];
       const d = await api('/sub/add', { repo, types, groups });
@@ -1577,6 +1592,7 @@
       $('edit-commits').checked = (sub.types || []).includes('commits');
       $('edit-issues').checked = (sub.types || []).includes('issues');
       $('edit-pulls').checked = (sub.types || []).includes('pulls');
+      $('edit-actions').checked = (sub.types || []).includes('actions');
       editPicker = createGroupPicker('edit-grp-picker', sub.groups || []);
       $('editModal').classList.add('show');
     }
@@ -1587,6 +1603,7 @@
       if ($('edit-commits').checked) types.push('commits');
       if ($('edit-issues').checked) types.push('issues');
       if ($('edit-pulls').checked) types.push('pulls');
+      if ($('edit-actions').checked) types.push('actions');
       const groups = editPicker ? editPicker.getSelected() : [];
       const branch = $('edit-branch').value.trim() || 'main';
       const d = await api('/sub/update', { repo, types, groups, branch });

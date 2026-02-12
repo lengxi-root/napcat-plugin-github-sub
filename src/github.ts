@@ -91,3 +91,14 @@ export async function fetchCommitDetail (repo: string, sha: string): Promise<{ f
   pluginState.debug(`[GitHub] 获取 commit 详情: ${repo}@${sha.slice(0, 7)}`);
   return await fetchJSON<{ files?: any[]; }>(url);
 }
+
+/** 获取仓库最近的 Actions workflow runs */
+export async function fetchActionRuns (repo: string, perPage = 10): Promise<any[]> {
+  const base = pluginState.config.apiBase || 'https://api.github.com';
+  const url = `${base}/repos/${repo}/actions/runs?per_page=${perPage}`;
+  pluginState.debug(`[GitHub] 获取 Actions runs: ${repo}`);
+  const data = await fetchJSON<{ workflow_runs: any[]; }>(url);
+  const runs = data?.workflow_runs || [];
+  pluginState.debug(`[GitHub] ${repo}: ${runs.length} 条 Actions runs`);
+  return runs;
+}

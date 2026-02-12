@@ -1,7 +1,7 @@
 {
   "name": "napcat-plugin-github-sub",
   "plugin": "GitHub 订阅",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "main": "index.mjs",
   "description": "GitHub 仓库订阅推送插件，监控 Commits / Issues / Pull Requests 并渲染图片推送",

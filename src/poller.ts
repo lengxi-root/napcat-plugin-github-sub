@@ -1,8 +1,8 @@
 // 轮询模块 - 使用 Events API，每个仓库只需 1 次请求
-import type { GitHubEvent, CommitData, IssueData, CommentData, EventType } from './types';
+import type { GitHubEvent, CommitData, IssueData, CommentData, ActionRunData, EventType } from './types';
 import { pluginState } from './state';
-import { fetchEvents, fetchCommitDetail } from './github';
-import { renderCommits, renderIssues, renderPulls, renderComments, commitsSummary, issuesSummary, commentsSummary } from './render';
+import { fetchEvents, fetchCommitDetail, fetchActionRuns } from './github';
+import { renderCommits, renderIssues, renderPulls, renderComments, renderActions, commitsSummary, issuesSummary, commentsSummary, actionsSummary } from './render';
 
 /** 发送 base64 图片消息到群，失败则降级为文本 */
 async function sendImage (groupId: string, base64: string | null, fallbackText: string): Promise<void> {
@@ -254,6 +254,39 @@ async function checkRepo (repo: string, branch: string, types: EventType[], grou
       pluginState.debug(`[渲染] Comments 渲染结果: ${base64 ? '成功' : '失败'}`);
       const fallback = commentsSummary(repo, comments);
       for (const gid of groups) await sendImage(gid, base64, fallback);
+    }
+  }
+
+  // Actions 监控（独立 API，不走 Events）
+  if (types.includes('actions')) {
+    const actionsCacheKey = `${repo}:actions`;
+    pluginState.debug(`[轮询] ${repo}: 检查 Actions runs`);
+    const runs = await fetchActionRuns(repo);
+    if (runs.length) {
+      const latestRunId = String(runs[0].id);
+      const lastKnownRun = pluginState.cache[actionsCacheKey];
+      if (!lastKnownRun) {
+        pluginState.cache[actionsCacheKey] = latestRunId;
+        pluginState.saveCache();
+        pluginState.log('info', `[${repo}] Actions 首次运行，记录最新 run ID: ${latestRunId}`);
+      } else if (lastKnownRun !== latestRunId) {
+        const lastIdx = runs.findIndex(r => String(r.id) === lastKnownRun);
+        const newRuns: ActionRunData[] = (lastIdx > 0 ? runs.slice(0, lastIdx) : runs.slice(0, 10)).map((r: any) => ({
+          id: r.id, name: r.name || r.display_title || '', head_branch: r.head_branch || '',
+          head_sha: r.head_sha || '', status: r.status || '', conclusion: r.conclusion || null,
+          html_url: r.html_url || '', created_at: r.created_at || '', updated_at: r.updated_at || '',
+          actor: { login: r.actor?.login || '', avatar_url: r.actor?.avatar_url || '' },
+          event: r.event || '', run_number: r.run_number || 0,
+        }));
+        pluginState.cache[actionsCacheKey] = latestRunId;
+        pluginState.saveCache();
+        if (newRuns.length) {
+          pluginState.log('info', `[${repo}] 推送 ${newRuns.length} 条 Actions 更新到 ${groups.length} 个群`);
+          const base64 = await renderActions(repo, newRuns);
+          const fallback = actionsSummary(repo, newRuns);
+          for (const gid of groups) await sendImage(gid, base64, fallback);
+        }
+      }
     }
   }
 }
