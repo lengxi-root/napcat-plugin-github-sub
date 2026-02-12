@@ -193,45 +193,118 @@ function actionTag (action?: string): string {
   return `<span class="action-tag" style="background:${a.bg};color:${a.color}">${a.text}</span>`;
 }
 
-/** 生成 Issues HTML */
+/** Markdown 风格渲染容器 */
+function wrapMarkdownHTML (repo: string, typeName: string, color: string, icon: string, count: number, mdBody: string): string {
+  const t = getTheme();
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:${t.bg};color:${t.text};padding:20px;width:600px}
+.card{background:${t.card};border:1px solid ${t.border};border-radius:12px;overflow:hidden}
+.hd{padding:16px 20px;border-bottom:1px solid ${t.border};display:flex;align-items:center;gap:12px}
+.hd-icon{display:flex;align-items:center}
+.hd h2{font-size:16px;font-weight:600;color:${t.text}}
+.hd .repo{font-size:13px;color:${t.textSub};margin-top:2px}
+.hd .badge{background:${color}20;color:${color};border:1px solid ${color}40;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:500;margin-left:auto}
+.md{padding:16px 20px;font-size:13px;line-height:1.7;color:${t.text}}
+.md h3{font-size:14px;font-weight:600;margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid ${t.divider};color:${t.text}}
+.md h3:first-child{margin-top:0}
+.md p{margin:4px 0}
+.md code{background:${t.codeBg};border:1px solid ${t.border};padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px}
+.md blockquote{margin:6px 0;padding:6px 14px;border-left:3px solid ${t.border};color:${t.textSub};background:${t.codeBg};border-radius:0 6px 6px 0;font-size:12px;line-height:1.6}
+.md ul{padding-left:20px;margin:4px 0}
+.md li{margin:2px 0}
+.md .tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:500;margin-left:4px}
+.md .tag-open{background:rgba(63,185,80,.12);color:#3fb950}
+.md .tag-closed{background:rgba(248,81,73,.12);color:#f85149}
+.md .tag-merged{background:rgba(163,113,247,.12);color:#a371f7}
+.md .tag-reopened{background:rgba(210,153,34,.12);color:#d29922}
+.md .lbl{display:inline-block;padding:0 6px;border-radius:8px;font-size:10px;margin-left:3px}
+.md .meta{font-size:11px;color:${t.textMuted}}
+.md hr{border:none;border-top:1px solid ${t.divider};margin:8px 0}
+.ft{padding:10px 20px;border-top:1px solid ${t.border};text-align:center;font-size:11px;color:${t.textMuted}}
+</style></head><body>
+<div class="card">
+  <div class="hd">
+    <span class="hd-icon">${icon}</span>
+    <div><h2>${typeName} 更新</h2><div class="repo">${esc(repo)}</div></div>
+    <span class="badge">${count} 条新更新</span>
+  </div>
+  <div class="md">${mdBody}</div>
+  <div class="ft">GitHub Subscription · ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}</div>
+</div>
+</body></html>`;
+}
+
+/** 动作 → Markdown 标签 */
+function mdActionTag (action?: string, state?: string): string {
+  const a = action || state || '';
+  const map: Record<string, string> = { opened: 'tag-open', closed: 'tag-closed', reopened: 'tag-reopened', merged: 'tag-merged', open: 'tag-open' };
+  const cls = map[a] || '';
+  const textMap: Record<string, string> = { opened: '新建', closed: '已关闭', reopened: '重新打开', merged: '已合并', open: '打开中' };
+  const text = textMap[a] || a;
+  return text ? `<span class="tag ${cls}">${esc(text)}</span>` : '';
+}
+
+/** 简易 Markdown body → HTML（处理代码块、引用、列表等） */
+function mdBodyToHTML (raw: string | null, maxLen = 200): string {
+  if (!raw) return '';
+  let s = raw.length > maxLen ? raw.slice(0, maxLen) + '...' : raw;
+  // 代码块 ```...```
+  s = s.replace(/```[\s\S]*?```/g, m => {
+    const code = m.replace(/^```\w*\n?/, '').replace(/\n?```$/, '');
+    return `<code>${esc(code)}</code>`;
+  });
+  // 行内代码
+  s = s.replace(/`([^`]+)`/g, (_, c) => `<code>${esc(c)}</code>`);
+  // 转义其余 HTML
+  s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // 恢复我们生成的 code 标签
+  s = s.replace(/&lt;code&gt;/g, '<code>').replace(/&lt;\/code&gt;/g, '</code>');
+  // 换行
+  s = s.replace(/\n/g, '<br>');
+  return s;
+}
+
+/** 生成 Issues Markdown 风格 HTML */
 function issuesHTML (repo: string, issues: IssueData[]): string {
   const rows = issues.map(i => {
     const title = esc(truncate(i.title, 80));
     const author = esc(i.user.login);
     const time = fmtTime(i.created_at);
-    const dot = i.state === 'open' ? SVG.dotOpen : SVG.dotClosed;
-    const labels = i.labels.map(l => `<span class="label" style="background:#${l.color}20;color:#${l.color};border:1px solid #${l.color}40">${esc(l.name)}</span>`).join('');
-    const tag = actionTag(i.action);
-    return `<div class="item"><div class="item-header"><span class="st-dot">${dot}</span><span style="color:${i.state === 'open' ? '#3fb950' : '#f85149'}">#${i.number}</span>${tag}<span class="author">${author}</span><span class="time">${time}</span></div><div class="msg">${title} ${labels}</div></div>`;
-  }).join('');
-  return wrapHTML(repo, 'Issues', '#8957e5', SVG.issue, issues.length, rows);
+    const tag = mdActionTag(i.action, i.state);
+    const labels = i.labels.map(l => `<span class="lbl" style="background:#${l.color}20;color:#${l.color};border:1px solid #${l.color}40">${esc(l.name)}</span>`).join('');
+    const body = i.body ? `<blockquote>${mdBodyToHTML(i.body, 3000)}</blockquote>` : '';
+    return `<h3><code>#${i.number}</code> ${title} ${tag}${labels}</h3>
+<p class="meta">@${author} · ${time}</p>${body}`;
+  }).join('<hr>');
+  return wrapMarkdownHTML(repo, 'Issues', '#8957e5', SVG.issue, issues.length, rows);
 }
 
-/** 生成 Pull Requests HTML */
+/** 生成 Pull Requests Markdown 风格 HTML */
 function pullsHTML (repo: string, pulls: IssueData[]): string {
   const rows = pulls.map(p => {
     const title = esc(truncate(p.title, 80));
     const author = esc(p.user.login);
     const time = fmtTime(p.created_at);
-    const dot = p.state === 'open' ? SVG.dotOpen : p.state === 'merged' ? SVG.dotMerged : SVG.dotClosed;
-    const stateColor = p.state === 'open' ? '#3fb950' : p.state === 'merged' ? '#a371f7' : '#f85149';
-    const tag = actionTag(p.action);
-    return `<div class="item"><div class="item-header"><span class="st-dot">${dot}</span><span style="color:${stateColor}">#${p.number}</span>${tag}<span class="author">${author}</span><span class="time">${time}</span></div><div class="msg">${title}</div></div>`;
-  }).join('');
-  return wrapHTML(repo, 'Pull Requests', '#db6d28', SVG.pr, pulls.length, rows);
+    const tag = mdActionTag(p.action, p.state);
+    return `<h3><code>#${p.number}</code> ${title} ${tag}</h3>
+<p class="meta">@${author} · ${time}</p>`;
+  }).join('<hr>');
+  return wrapMarkdownHTML(repo, 'Pull Requests', '#db6d28', SVG.pr, pulls.length, rows);
 }
 
-/** 生成 Comments HTML */
+/** 生成 Comments Markdown 风格 HTML */
 function commentsHTML (repo: string, comments: CommentData[]): string {
   const rows = comments.map(c => {
-    const body = esc(truncate(c.body.replace(/\n/g, ' '), 120));
     const author = esc(c.user.login);
     const time = fmtTime(c.created_at);
-    const sourceIcon = c.source === 'pull_request' ? SVG.pr : SVG.issue;
     const title = esc(truncate(c.title, 60));
-    return `<div class="item"><div class="item-header"><span class="st-dot">${sourceIcon}</span><span style="color:#58a6ff">#${c.number}</span><span style="font-size:11px;color:${getTheme().textSub}">${title}</span><span class="time">${time}</span></div><div class="msg"><span class="author">${author}</span>: ${body}</div></div>`;
-  }).join('');
-  return wrapHTML(repo, 'Comments', '#58a6ff', SVG.comment, comments.length, rows);
+    const srcLabel = c.source === 'pull_request' ? 'PR' : 'Issue';
+    const body = `<blockquote>${mdBodyToHTML(c.body, 3000)}</blockquote>`;
+    return `<h3><code>${srcLabel} #${c.number}</code> ${title}</h3>
+<p class="meta">@${author} 评论于 ${time}</p>${body}`;
+  }).join('<hr>');
+  return wrapMarkdownHTML(repo, 'Comments', '#58a6ff', SVG.comment, comments.length, rows);
 }
 
 /** 文本摘要（降级用） */
