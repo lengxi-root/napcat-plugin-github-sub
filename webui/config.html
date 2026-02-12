@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate" />
+  <title>GitHub 订阅 · 配置面板</title>
+  <style>
+    :root {
+      --ease: cubic-bezier(.4, 0, .2, 1);
+      --accent: #1f6feb;
+      --accentl: #388bfd;
+      --accentd: #1158c7;
+      --bg: #f6f8fa;
+      --bgd: #0d1117;
+      --card: rgba(255, 255, 255, .85);
+      --cardd: rgba(22, 27, 34, .75);
+      --side: #fff;
+      --sided: #161b22;
+      --border: #d0d7de;
+      --borderd: #30363d;
+      --text: #1f2328;
+      --textd: #e6edf3;
+      --text2: #656d76;
+      --text2d: #8b949e;
+      --text3: #8b949e;
+      --text3d: #484f58;
+      --danger: #cf222e;
+      --dangerd: #f85149;
+      --green: #1a7f37;
+      --greend: #3fb950
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Noto Sans, Helvetica, Arial, sans-serif
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      transition: background .3s, color .3s
+    }
+
+    .dark body,
+    .dark {
+      background: var(--bgd);
+      color: var(--textd)
+    }
+
+    .glass {
+      background: var(--card);
+      backdrop-filter: blur(16px);
+      border-radius: 12px;
+      border: 1px solid rgba(208, 215, 222, .5);
+      box-shadow: 0 1px 3px rgba(31, 35, 40, .04);
+      transition: all .25s var(--ease)
+    }
+
+    .dark .glass {
+      background: var(--cardd);
+      border-color: var(--borderd);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .2)
+    }
+
+    .sb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      color: var(--text2);
+      cursor: pointer;
+      margin-bottom: 2px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all .2s var(--ease);
+      user-select: none
+    }
+
+    .dark .sb {
+      color: var(--text2d)
+    }
+
+    .sb:hover {
+      background: rgba(31, 111, 235, .08);
+      color: var(--accent)
+    }
+
+    .sb.active {
+      background: linear-gradient(135deg, var(--accentl), var(--accent));
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(31, 111, 235, .3)
+    }
+
+    .dark .sb.active {
+      box-shadow: 0 2px 10px rgba(31, 111, 235, .2)
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 16px;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      gap: 6px;
+      font-size: 13px;
+      transition: all .2s var(--ease);
+      user-select: none
+    }
+
+    .btn:active {
+      transform: scale(.96)
+    }
+
+    .btn-p {
+      background: linear-gradient(135deg, var(--accentl), var(--accent));
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(31, 111, 235, .25)
+    }
+
+    .btn-p:hover {
+      box-shadow: 0 4px 14px rgba(31, 111, 235, .35);
+      filter: brightness(1.05)
+    }
+
+    .btn-s {
+      background: rgba(31, 111, 235, .08);
+      color: var(--accent);
+      border: 1px solid rgba(31, 111, 235, .2)
+    }
+
+    .dark .btn-s {
+      color: var(--accentl);
+      border-color: rgba(31, 111, 235, .15)
+    }
+
+    .btn-s:hover {
+      background: rgba(31, 111, 235, .15)
+    }
+
+    .btn-d {
+      background: rgba(207, 34, 46, .06);
+      color: var(--danger);
+      border: 1px solid rgba(207, 34, 46, .15)
+    }
+
+    .dark .btn-d {
+      color: var(--dangerd)
+    }
+
+    .btn-d:hover {
+      background: rgba(207, 34, 46, .12)
+    }
+
+    .ipt {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 13px;
+      transition: all .2s;
+      color: var(--text)
+    }
+
+    .dark .ipt {
+      background: rgba(22, 27, 34, .6);
+      border-color: var(--borderd);
+      color: var(--textd)
+    }
+
+    .ipt:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(31, 111, 235, .15)
+    }
+
+    .tgl {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      background: #d0d7de;
+      border-radius: 11px;
+      cursor: pointer;
+      transition: background .25s;
+      flex-shrink: 0
+    }
+
+    .dark .tgl {
+      background: #30363d
+    }
+
+    .tgl.on {
+      background: linear-gradient(135deg, var(--accentl), var(--accent))
+    }
+
+    .tgl::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform .25s var(--ease);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .12)
+    }
+
+    .tgl.on::after {
+      transform: translateX(18px)
+    }
+
+    .pg {
+      display: none;
+      animation: fi .3s var(--ease)
+    }
+
+    .pg.active {
+      display: block
+    }
+
+    @keyframes fi {
+      from {
+        opacity: 0;
+        transform: translateY(6px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .sec-t {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 10px
+    }
+
+    .dark .sec-t {
+      color: var(--accentl)
+    }
+
+    .cfg-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0
+    }
+
+    .cfg-sec {
+      border-bottom: 1px solid rgba(208, 215, 222, .3);
+      padding-bottom: 14px;
+      margin-bottom: 14px
+    }
+
+    .dark .cfg-sec {
+      border-color: rgba(48, 54, 61, .5)
+    }
+
+    .cfg-sec:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0
+    }
+
+    .toast-c {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px
+    }
+
+    .toast {
+      padding: 10px 16px;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, .1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: si .3s ease;
+      font-size: 13px;
+      border: 1px solid rgba(208, 215, 222, .3)
+    }
+
+    .dark .toast {
+      background: #161b22;
+      border-color: var(--borderd)
+    }
+
+    @keyframes si {
+      from {
+        opacity: 0;
+        transform: translateX(80px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0)
+      }
+    }
+
+    .scr::-webkit-scrollbar {
+      width: 5px
+    }
+
+    .scr::-webkit-scrollbar-track {
+      background: transparent
+    }
+
+    .scr::-webkit-scrollbar-thumb {
+      background: rgba(31, 111, 235, .25);
+      border-radius: 3px
+    }
+
+    .stat {
+      text-align: center;
+      padding: 14px 8px;
+      border-radius: 12px;
+      transition: all .2s var(--ease)
+    }
+
+    .stat:hover {
+      transform: translateY(-1px)
+    }
+
+    .sub-item {
+      border: 1px solid rgba(208, 215, 222, .4);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 8px;
+      background: rgba(255, 255, 255, .4);
+      transition: all .2s var(--ease)
+    }
+
+    .dark .sub-item {
+      border-color: var(--borderd);
+      background: rgba(22, 27, 34, .3)
+    }
+
+    .sub-item:hover {
+      border-color: rgba(31, 111, 235, .3);
+      box-shadow: 0 2px 8px rgba(31, 111, 235, .06)
+    }
+
+    .type-badge {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+      margin-right: 4px
+    }
+
+    .type-commits {
+      background: rgba(26, 127, 55, .1);
+      color: var(--green)
+    }
+
+    .dark .type-commits {
+      background: rgba(63, 185, 80, .12);
+      color: var(--greend)
+    }
+
+    .type-issues {
+      background: rgba(137, 87, 229, .1);
+      color: #8957e5
+    }
+
+    .dark .type-issues {
+      background: rgba(137, 87, 229, .12);
+      color: #a371f7
+    }
+
+    .type-pulls {
+      background: rgba(31, 111, 235, .1);
+      color: var(--accent)
+    }
+
+    .dark .type-pulls {
+      background: rgba(56, 139, 253, .12);
+      color: var(--accentl)
+    }
+
+    .sidebar {
+      width: 200px;
+      flex-shrink: 0;
+      background: var(--side);
+      border-right: 1px solid rgba(208, 215, 222, .5);
+      display: flex;
+      flex-direction: column;
+      z-index: 10;
+      transition: background .3s, border-color .3s
+    }
+
+    .dark .sidebar {
+      background: var(--sided);
+      border-color: var(--borderd)
+    }
+
+    .header-bar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 10px 20px;
+      background: rgba(246, 248, 250, .8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(208, 215, 222, .3);
+      transition: background .3s, border-color .3s
+    }
+
+    .dark .header-bar {
+      background: rgba(13, 17, 23, .8);
+      border-color: rgba(48, 54, 61, .3)
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%
+    }
+
+    .status-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, .8);
+      border-radius: 20px;
+      border: 1px solid rgba(208, 215, 222, .4);
+      backdrop-filter: blur(8px)
+    }
+
+    .dark .status-wrap {
+      background: rgba(22, 27, 34, .6);
+      border-color: var(--borderd)
+    }
+
+    .main-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 20px 32px
+    }
+
+    .chk {
+      accent-color: var(--accent);
+      width: 16px;
+      height: 16px;
+      cursor: pointer
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .5);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px)
+    }
+
+    .modal-overlay.show {
+      display: flex
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 14px;
+      padding: 24px;
+      width: 520px;
+      max-width: 90vw;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .2);
+      border: 1px solid rgba(208, 215, 222, .3)
+    }
+
+    .dark .modal {
+      background: #161b22;
+      border-color: var(--borderd)
+    }
+
+    .gh-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .gh-icon svg {
+      fill: currentColor
+    }
+
+    /* group chips */
+    .chip-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+      min-height: 32px;
+      padding: 6px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      cursor: text
+    }
+
+    .dark .chip-wrap {
+      background: rgba(22, 27, 34, .6);
+      border-color: var(--borderd)
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      background: rgba(31, 111, 235, .08);
+      color: var(--accent);
+      border: 1px solid rgba(31, 111, 235, .15)
+    }
+
+    .dark .chip {
+      background: rgba(31, 111, 235, .1);
+      color: var(--accentl)
+    }
+
+    .chip-x {
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      opacity: .6;
+      transition: opacity .15s
+    }
+
+    .chip-x:hover {
+      opacity: 1
+    }
+
+    .grp-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      max-height: 200px;
+      overflow-y: auto;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+      z-index: 50;
+      display: none
+    }
+
+    .dark .grp-dropdown {
+      background: #161b22;
+      border-color: var(--borderd)
+    }
+
+    .grp-dropdown.show {
+      display: block
+    }
+
+    .grp-opt {
+      padding: 8px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background .15s;
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .grp-opt:hover {
+      background: rgba(31, 111, 235, .06)
+    }
+
+    .grp-opt .grp-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    .grp-opt .grp-id {
+      font-size: 11px;
+      color: var(--text3);
+      flex-shrink: 0
+    }
+
+    /* log */
+    .log-c {
+      max-height: 400px;
+      overflow-y: auto;
+      background: #0c1222;
+      border-radius: 10px;
+      padding: 12px;
+      font-family: 'Cascadia Code', Consolas, monospace;
+      font-size: 11px;
+      line-height: 1.6
+    }
+
+    .dark .log-c {
+      background: #0a0e1a
+    }
+
+    .log-e {
+      padding: 1px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, .03);
+      white-space: pre-wrap;
+      word-break: break-all
+    }
+
+    .log-e .lt {
+      color: #475569
+    }
+
+    .log-e.log-info .ll {
+      color: #60a5fa
+    }
+
+    .log-e.log-debug .ll {
+      color: #a78bfa
+    }
+
+    .log-e.log-warn .ll {
+      color: #fbbf24
+    }
+
+    .log-e.log-error .ll {
+      color: #f87171
+    }
+
+    .log-e .lm {
+      color: #e2e8f0
+    }
+
+    .lfb {
+      padding: 5px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(31, 111, 235, .12);
+      background: transparent;
+      color: var(--text2);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s
+    }
+
+    .dark .lfb {
+      border-color: rgba(31, 111, 235, .1);
+      color: var(--text2d)
+    }
+
+    .lfb.active {
+      background: linear-gradient(135deg, var(--accentl), var(--accent));
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 2px 8px rgba(31, 111, 235, .25)
+    }
+
+    .lfb:hover:not(.active) {
+      border-color: var(--accent);
+      color: var(--accent)
+    }
+  </style>
+</head>
+
+<body>
+  <div id="tc" class="toast-c"></div>
+
+  <!-- 确认弹窗 -->
+  <div id="confirmModal" class="modal-overlay">
+    <div class="modal" style="width:380px;text-align:center">
+      <div style="font-size:20px;margin-bottom:12px"><svg width="22" height="22" viewBox="0 0 16 16" fill="#d29922">
+          <path
+            d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575ZM8 5a.75.75 0 0 0-.75.75v2.5a.75.75 0 0 0 1.5 0v-2.5A.75.75 0 0 0 8 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
+        </svg></div>
+      <div id="confirm-msg" style="font-size:14px;margin-bottom:20px"></div>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button class="btn btn-s" onclick="confirmResolve(false)">取消</button>
+        <button class="btn btn-d" onclick="confirmResolve(true)">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑弹窗 -->
+  <div id="editModal" class="modal-overlay">
+    <div class="modal">
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+        <span class="gh-icon" style="color:var(--accent)"><svg width="20" height="20" viewBox="0 0 16 16">
+            <path
+              d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z" />
+          </svg></span>
+        编辑订阅
+      </h3>
+      <input type="hidden" id="edit-repo">
+      <div style="margin-bottom:12px"><label style="font-size:12px;color:var(--text2)">分支</label><input type="text"
+          id="edit-branch" class="ipt" placeholder="main"></div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;color:var(--text2)">监控类型</label>
+        <div style="display:flex;gap:12px;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="edit-commits"
+              class="chk"> Commits</label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="edit-issues"
+              class="chk"> Issues</label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="edit-pulls"
+              class="chk"> PRs</label>
+
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;color:var(--text2)">推送群</label>
+        <div id="edit-grp-picker" style="position:relative"></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+        <button class="btn btn-s" onclick="closeEdit()">取消</button>
+        <button class="btn btn-p" onclick="saveEdit()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;height:100vh;overflow:hidden">
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+      <div style="padding:16px;display:flex;align-items:center;gap:10px">
+        <div
+          style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:#24292f;border-radius:12px;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15)">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="#fff">
+            <path
+              d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z" />
+          </svg>
+        </div>
+        <div>
+          <h1 style="font-size:14px;font-weight:700;line-height:1.25">GitHub 订阅</h1>
+          <p style="font-size:10px;color:var(--text3)">GitSub v1.0.0</p>
+        </div>
+      </div>
+      <nav style="flex:1;padding:4px 10px;overflow-y:auto" class="scr">
+        <div class="sb active" onclick="go('dashboard',this)"><span class="gh-icon"><svg width="16" height="16"
+              viewBox="0 0 16 16" fill="currentColor">
+              <path
+                d="M0 1.75A.75.75 0 0 1 .75 1h14.5a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75H.75a.75.75 0 0 1-.75-.75Zm1.5.75v11h13v-11ZM6.25 4a.75.75 0 0 0-.75.75v6.5a.75.75 0 0 0 1.5 0v-6.5A.75.75 0 0 0 6.25 4Zm3.5 2a.75.75 0 0 0-.75.75v4.5a.75.75 0 0 0 1.5 0v-4.5A.75.75 0 0 0 9.75 6ZM3.5 9.75a.75.75 0 0 1 1.5 0v1.5a.75.75 0 0 1-1.5 0Zm9-1a.75.75 0 0 0-.75.75v1.75a.75.75 0 0 0 1.5 0V9.5a.75.75 0 0 0-.75-.75Z" />
+            </svg></span> 仪表盘</div>
+        <div class="sb" onclick="go('config',this)"><span class="gh-icon"><svg width="16" height="16"
+              viewBox="0 0 16 16" fill="currentColor">
+              <path
+                d="M8 0a8.2 8.2 0 0 1 .701.031C9.444.095 9.99.645 10.16 1.29l.288 1.107a.72.72 0 0 0 .212.224c.231.114.454.243.668.386a.3.3 0 0 0 .3.071L12.7 2.77c.63-.186 1.332.023 1.821.567.245.272.47.564.695.695.544.49.753 1.192.567 1.822l-.308 1.074a.3.3 0 0 0 .071.299c.143.213.272.437.386.668a.72.72 0 0 0 .224.212l1.107.288c.645.17 1.195.716 1.26 1.459a8.2 8.2 0 0 1 0 1.402c-.065.743-.615 1.29-1.26 1.46l-1.107.287a.72.72 0 0 0-.224.212 5.4 5.4 0 0 1-.386.668.3.3 0 0 0-.071.3l.308 1.073c.186.63-.023 1.332-.567 1.822a8 8 0 0 1-.695.695c-.49.544-1.192.753-1.822.567l-1.073-.308a.3.3 0 0 0-.299.071 5.4 5.4 0 0 1-.668.386.72.72 0 0 0-.212.224l-.288 1.107c-.17.645-.716 1.195-1.459 1.26a8.2 8.2 0 0 1-1.402 0c-.743-.065-1.29-.615-1.46-1.26l-.287-1.107a.72.72 0 0 0-.212-.224 5.4 5.4 0 0 1-.668-.386.3.3 0 0 0-.3-.071l-1.073.308c-.63.186-1.332-.023-1.822-.567a8 8 0 0 1-.695-.695c-.544-.49-.753-1.192-.567-1.822l.308-1.073a.3.3 0 0 0-.071-.299 5.4 5.4 0 0 1-.386-.668.72.72 0 0 0-.224-.212L1.29 9.84C.645 9.67.095 9.124.03 8.381a8.2 8.2 0 0 1 0-1.402C.095 6.236.645 5.69 1.29 5.52l1.107-.288a.72.72 0 0 0 .224-.212c.114-.231.243-.454.386-.668a.3.3 0 0 0 .071-.3L2.77 2.98c-.186-.63.023-1.332.567-1.822A8 8 0 0 1 4.032.463c.49-.544 1.192-.753 1.822-.567l1.073.308a.3.3 0 0 0 .299-.071c.213-.143.437-.272.668-.386a.72.72 0 0 0 .212-.224L8.38.416c.17-.645.716-1.195 1.459-1.26A8 8 0 0 1 8 0ZM5.5 8a2.5 2.5 0 1 0 5 0 2.5 2.5 0 0 0-5 0Z" />
+            </svg></span> 基础配置</div>
+        <div class="sb" onclick="go('subs',this)"><span class="gh-icon"><svg width="16" height="16" viewBox="0 0 16 16"
+              fill="currentColor">
+              <path d="M2 2h4v4H2Zm6 1h6v2H8ZM2 8h4v4H2Zm6 1h6v2H8Z" />
+            </svg></span> 订阅管理</div>
+        <div class="sb" onclick="go('add',this)"><span class="gh-icon"><svg width="16" height="16" viewBox="0 0 16 16"
+              fill="currentColor">
+              <path
+                d="M7.75 2a.75.75 0 0 1 .75.75V7h4.25a.75.75 0 0 1 0 1.5H8.5v4.25a.75.75 0 0 1-1.5 0V8.5H2.75a.75.75 0 0 1 0-1.5H7V2.75A.75.75 0 0 1 7.75 2Z" />
+            </svg></span> 添加订阅</div>
+        <div class="sb" onclick="go('logs',this)"><span class="gh-icon"><svg width="16" height="16" viewBox="0 0 16 16"
+              fill="currentColor">
+              <path
+                d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V1.75a.25.25 0 0 0-.25-.25ZM3 4h10v1.5H3Zm0 3h10v1.5H3Zm0 3h7v1.5H3Z" />
+            </svg></span> 调试日志</div>
+        <div class="sb" onclick="go('tpl',this)"><span class="gh-icon"><svg width="16" height="16" viewBox="0 0 16 16"
+              fill="currentColor">
+              <path
+                d="M11.134 1.535c.7-.509 1.416-.942 2.076-1.155.649-.21 1.463-.267 2.069.34.603.601.568 1.411.368 2.07-.202.668-.624 1.39-1.125 2.096-1.011 1.424-2.496 2.987-3.775 4.249-1.098 1.084-2.132 1.839-3.04 2.3a3.74 3.74 0 0 1-1.055 3.217c-.431.431-1.065.691-1.657.861-.614.177-1.294.287-1.914.357A21 21 0 0 1 .797 16H.743l.007-.75H.749L.742 16a.75.75 0 0 1-.743-.742l.743-.008-.744.007v-.054a21 21 0 0 1 .13-2.284c.067-.628.176-1.317.356-1.94.174-.6.44-1.244.88-1.676a3.74 3.74 0 0 1 3.217-1.054c.466-.893 1.228-1.914 2.318-3.016 1.255-1.27 2.81-2.746 4.228-3.748ZM3.1 12.9c-.18.18-.345.503-.494 1.018-.131.453-.22.98-.284 1.527.547-.065 1.074-.153 1.528-.284.515-.15.837-.314 1.018-.494A2.26 2.26 0 0 0 5.5 13c0-.591-.234-1.157-.65-1.573A2.23 2.23 0 0 0 3.1 12.9Z" />
+            </svg></span> 自定义模板</div>
+      </nav>
+      <div
+        style="padding:10px 12px;border-top:1px solid rgba(208,215,222,.3);text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px">
+        <a href="https://github.com/lengxi-root/napcat-plugin-github-sub" target="_blank"
+          style="font-size:10px;color:var(--text3);text-decoration:none;display:flex;align-items:center;gap:4px;transition:color .2s">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path
+              d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z" />
+          </svg>
+          GitHub
+        </a>
+        <a href="https://qm.qq.com/q/zovrYfSivQ" target="_blank"
+          style="font-size:10px;color:var(--text3);text-decoration:none;display:flex;align-items:center;gap:4px;transition:color .2s">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path
+              d="M1.75 1h8.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 10.25 10H7.061l-2.574 2.573A1.458 1.458 0 0 1 2 11.543V10h-.25A1.75 1.75 0 0 1 0 8.25v-5.5C0 1.784.784 1 1.75 1ZM1.5 2.75v5.5c0 .138.112.25.25.25h1a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h3.5a.25.25 0 0 0 .25-.25v-5.5a.25.25 0 0 0-.25-.25h-8.5a.25.25 0 0 0-.25.25Zm13 2a.25.25 0 0 0-.25-.25h-.5a.75.75 0 0 1 0-1.5h.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 14.25 12H14v1.543a1.458 1.458 0 0 1-2.487 1.03L9.22 12.28a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l2.22 2.22V11.25a.75.75 0 0 1 .75-.75h1a.25.25 0 0 0 .25-.25Z" />
+          </svg>
+          交流群 631348711
+        </a>
+        <div style="font-size:10px;color:var(--text3)">by 冷曦</div>
+      </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <header class="header-bar">
+        <div style="display:flex;align-items:center;gap:8px">
+          <button onclick="doRefresh()" class="btn btn-s">刷新</button>
+          <div class="status-wrap">
+            <div id="sDot" class="status-dot" style="background:#f87171"></div>
+            <span style="font-size:12px;font-weight:500" id="sTxt">加载中...</span>
+          </div>
+        </div>
+      </header>
+      <main class="main-area scr">
+
+        <!-- 仪表盘 -->
+        <div id="pg-dashboard" class="pg active">
+          <div class="glass" style="padding:20px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+              <div
+                style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:#24292f;border-radius:12px;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15)">
+                <svg width="22" height="22" viewBox="0 0 16 16" fill="#fff">
+                  <path
+                    d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z" />
+                </svg>
+              </div>
+              <div>
+                <h3 style="font-size:18px;font-weight:700">GitHub 订阅推送</h3>
+                <p style="font-size:12px;color:var(--text3)">GitSub v1.0.0 · by 冷曦</p>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+              <div class="stat" style="background:rgba(31,111,235,.06)">
+                <div style="font-size:20px;font-weight:700;color:var(--accent)" id="d-total">-</div>
+                <div style="font-size:10px;color:var(--text3);margin-top:4px">总订阅数</div>
+              </div>
+              <div class="stat" style="background:rgba(26,127,55,.06)">
+                <div style="font-size:20px;font-weight:700;color:var(--green)" id="d-active">-</div>
+                <div style="font-size:10px;color:var(--text3);margin-top:4px">已启用</div>
+              </div>
+              <div class="stat" style="background:rgba(137,87,229,.06)">
+                <div style="font-size:20px;font-weight:700;color:#8957e5" id="d-groups">-</div>
+                <div style="font-size:10px;color:var(--text3);margin-top:4px">推送群数</div>
+              </div>
+              <div class="stat" style="background:rgba(219,109,40,.06)">
+                <div style="font-size:20px;font-weight:700;color:#db6d28" id="d-interval">-</div>
+                <div style="font-size:10px;color:var(--text3);margin-top:4px">轮询间隔</div>
+              </div>
+            </div>
+          </div>
+          <div class="glass" style="padding:20px;margin-bottom:16px">
+            <div class="sec-t">功能状态</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+              <div
+                style="display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:8px;background:rgba(246,248,250,.8)">
+                <span style="font-size:14px;font-weight:500">GitHub Token</span>
+                <span style="font-size:10px;padding:2px 10px;border-radius:12px" id="d-token">-</span>
+              </div>
+              <div
+                style="display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:8px;background:rgba(246,248,250,.8)">
+                <span style="font-size:14px;font-weight:500">Puppeteer</span>
+                <span style="font-size:10px;padding:2px 10px;border-radius:12px" id="d-pptr">-</span>
+              </div>
+              <div
+                style="display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:8px;background:rgba(246,248,250,.8)">
+                <span style="font-size:14px;font-weight:500">调试模式</span>
+                <span style="font-size:10px;padding:2px 10px;border-radius:12px" id="d-debug">-</span>
+              </div>
+            </div>
+          </div>
+          <!-- Puppeteer 未安装提示 -->
+          <div id="pptr-warn" class="glass"
+            style="padding:16px;margin-bottom:16px;display:none;background:rgba(207,34,46,.06);border-color:rgba(207,34,46,.2)">
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <div style="flex-shrink:0;color:var(--danger)"><svg width="18" height="18" viewBox="0 0 16 16"
+                  fill="currentColor">
+                  <path
+                    d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575ZM8 5a.75.75 0 0 0-.75.75v2.5a.75.75 0 0 0 1.5 0v-2.5A.75.75 0 0 0 8 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
+                </svg></div>
+              <div>
+                <div style="font-size:14px;font-weight:600;color:var(--danger);margin-bottom:6px">Puppeteer 渲染服务未连接
+                </div>
+                <div style="font-size:12px;color:var(--text2);line-height:1.8">
+                  本插件需要 <code
+                    style="background:rgba(207,34,46,.08);padding:1px 6px;border-radius:4px;color:var(--danger)">napcat-plugin-puppeteer</code>
+                  来渲染推送图片。未安装时将降级为纯文本推送。
+                </div>
+                <div style="font-size:12px;color:var(--text2);line-height:1.8;margin-top:6px">
+                  安装方法：在 NapCat 插件商店搜索 <code
+                    style="background:rgba(31,111,235,.08);padding:1px 6px;border-radius:4px">napcat-plugin-puppeteer</code>
+                  并安装，建议将浏览器安装到 NapCat 容器内。
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="glass" style="padding:20px;margin-bottom:16px">
+            <div class="sec-t">最近订阅</div>
+            <div id="d-recent" style="font-size:13px;color:var(--text3)">加载中...</div>
+          </div>
+          <div class="glass" style="padding:20px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <div class="sec-t" style="margin-bottom:0">GitHub 连通性</div>
+              <button class="btn btn-s" style="font-size:11px;padding:4px 12px" onclick="pingGH()">测试连接</button>
+            </div>
+            <div id="d-ping" style="font-size:13px;color:var(--text3)">点击「测试连接」检查服务器到 GitHub API 的连通性</div>
+          </div>
+        </div>
+
+        <!-- 基础配置 -->
+        <div id="pg-config" class="pg">
+          <div class="glass" style="padding:20px;margin-bottom:16px">
+            <div class="sec-t">权限设置</div>
+            <div class="cfg-sec">
+              <div style="margin-bottom:12px">
+                <label style="font-size:12px;color:var(--text2)">主人 QQ 号</label>
+                <div id="owner-chips" class="chip-wrap"></div>
+                <div style="display:flex;gap:6px;margin-top:6px">
+                  <input type="text" id="owner-input" class="ipt" style="flex:1" placeholder="输入 QQ 号后回车添加"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();addOwner()}">
+                  <button class="btn btn-s" onclick="addOwner()">添加</button>
+                </div>
+                <p style="font-size:11px;color:var(--text3);margin-top:4px">留空则所有人都视为主人（不限制权限）</p>
+              </div>
+              <div>
+                <div class="cfg-row">
+                  <div>
+                    <span style="font-size:14px;font-weight:500">允许普通成员订阅</span>
+                    <p style="font-size:11px;color:var(--text3);margin-top:2px">关闭后仅主人可使用 订阅/取消/开启/关闭 指令，列表和帮助所有人可用</p>
+                  </div>
+                  <div class="tgl" id="cfg-allowMemberSub" onclick="tg(this)"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="glass" style="padding:20px;margin-bottom:16px">
+            <div class="sec-t">API 配置</div>
+            <div class="cfg-sec">
+              <div style="margin-bottom:12px">
+                <label style="font-size:12px;color:var(--text2)">GitHub Token 列表</label>
+                <div id="token-list"></div>
+                <div style="display:flex;gap:6px;margin-top:6px">
+                  <input type="password" id="token-input" class="ipt" style="flex:1" placeholder="粘贴 Token 后点击添加"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();addToken()}">
+                  <button class="btn btn-s" onclick="addToken()">添加</button>
+                </div>
+                <p style="font-size:11px;color:var(--text3);margin-top:4px">支持多个 Token 轮转使用，有效提高 API 速率限制。在 <a
+                    href="https://github.com/settings/tokens" target="_blank"
+                    style="color:var(--accent);text-decoration:none">GitHub Settings → Personal access tokens</a>
+                  生成</p>
+              </div>
+              <div style="margin-bottom:12px">
+                <label style="font-size:12px;color:var(--text2)">API 地址</label>
+                <input type="text" id="cfg-api" class="ipt" placeholder="https://api.github.com">
+                <p style="font-size:11px;color:var(--text3);margin-top:4px">默认官方 API，国内服务器可改为代理地址</p>
+              </div>
+            </div>
+            <div class="cfg-sec">
+              <div class="sec-t">轮询设置</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div>
+                  <label style="font-size:12px;color:var(--text2)">轮询间隔</label>
+                  <select id="cfg-interval" class="ipt">
+                    <option value="2">2秒</option>
+                    <option value="10">10秒</option>
+                    <option value="30">30秒</option>
+                    <option value="60">60秒</option>
+                    <option value="300">5分钟</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:12px;color:var(--text2)">调试模式</label>
+                  <div class="cfg-row" style="padding:4px 0">
+                    <span style="font-size:14px">启用调试日志</span>
+                    <div class="tgl" id="cfg-debug" onclick="tg(this)"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="cfg-sec">
+              <div class="sec-t">渲染主题</div>
+              <div style="margin-bottom:12px">
+                <label style="font-size:12px;color:var(--text2)">推送图片主题</label>
+                <select id="cfg-theme" class="ipt" onchange="onThemeChange()">
+                  <option value="light">白天模式</option>
+                  <option value="dark">黑夜模式</option>
+                  <option value="custom">自定义主题</option>
+                </select>
+                <p style="font-size:11px;color:var(--text3);margin-top:4px">控制推送到群的图片配色风格</p>
+              </div>
+              <div id="custom-theme-panel" style="display:none;margin-top:12px">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                  <div><label style="font-size:11px;color:var(--text2)">页面背景</label>
+                    <div style="display:flex;gap:6px;align-items:center"><input type="color" id="ct-bg" value="#ffffff"
+                        style="width:32px;height:28px;border:none;cursor:pointer;border-radius:4px"><input type="text"
+                        id="ct-bg-t" class="ipt" style="font-size:11px;padding:4px 8px" value="#ffffff"
+                        oninput="syncColor('bg')"></div>
+                  </div>
+                  <div><label style="font-size:11px;color:var(--text2)">卡片背景</label>
+                    <div style="display:flex;gap:6px;align-items:center"><input type="color" id="ct-card"
+                        value="#f6f8fa"
+                        style="width:32px;height:28px;border:none;cursor:pointer;border-radius:4px"><input type="text"
+                        id="ct-card-t" class="ipt" style="font-size:11px;padding:4px 8px" value="#f6f8fa"
+                        oninput="syncColor('card')"></div>
+                  </div>
+                  <div><label style="font-size:11px;color:var(--text2)">边框颜色</label>
+                    <div style="display:flex;gap:6px;align-items:center"><input type="color" id="ct-border"
+                        value="#d0d7de"
+                        style="width:32px;height:28px;border:none;cursor:pointer;border-radius:4px"><input type="text"
+                        id="ct-border-t" class="ipt" style="font-size:11px;padding:4px 8px" value="#d0d7de"
+                        oninput="syncColor('border')"></div>
+                  </div>
+                  <div><label style="font-size:11px;color:var(--text2)">分隔线</label>
+                    <div style="display:flex;gap:6px;align-items:center"><input type="color" id="ct-divider"
+                        value="#d8dee4"
+                        style="width:32px;height:28px;border:none;cursor:pointer;border-radius:4px"><input type="text"
+                        id="ct-divider-t" class="ipt" style="font-size:11px;padding:4px 8px" value="#d8dee4"
+                        oninput="syncColor('divider')"></div>
+                  </div>
+                  <div><label style="font-size:11px;color:var(--text2)">主文字</label>
+                    <div style="display:flex;gap:6px;align-items:center"><input type="color" id="ct-text"
+                        value="#1f2328"
+                        style="width:32px;height:28px;border:none;cursor:pointer;border-radius:4px"><input type="text"
+                        id="ct-text-t" class="ipt" style="font-size:11px;padding:4px 8px" value="#1f2328"
+                        oninput="syncColor('text')"></div>
+                  </div>
+                  <div><label style="font-size:11px;color:var(--text2)">次要文字</label>
+                    <div style="display:flex;gap:6px;align-items:center"><input type="color" id="ct-textSub"
+                        value="#656d76"
+                        style="width:32px;height:28px;border:none;cursor:pointer;border-radius:4px"><input type="text"
+                        id="ct-textSub-t" class="ipt" style="font-size:11px;padding:4px 8px" value="#656d76"
+                        oninput="syncColor('textSub')"></div>
+                  </div>
+                  <div><label style="font-size:11px;color:var(--text2)">弱文字</label>
+                    <div style="display:flex;gap:6px;align-items:center"><input type="color" id="ct-textMuted"
+                        value="#8b949e"
+                        style="width:32px;height:28px;border:none;cursor:pointer;border-radius:4px"><input type="text"
+                        id="ct-textMuted-t" class="ipt" style="font-size:11px;padding:4px 8px" value="#8b949e"
+                        oninput="syncColor('textMuted')"></div>
+                  </div>
+                  <div><label style="font-size:11px;color:var(--text2)">代码背景</label>
+                    <div style="display:flex;gap:6px;align-items:center"><input type="color" id="ct-codeBg"
+                        value="#f6f8fa"
+                        style="width:32px;height:28px;border:none;cursor:pointer;border-radius:4px"><input type="text"
+                        id="ct-codeBg-t" class="ipt" style="font-size:11px;padding:4px 8px" value="#f6f8fa"
+                        oninput="syncColor('codeBg')"></div>
+                  </div>
+                  <div><label style="font-size:11px;color:var(--text2)">代码头背景</label>
+                    <div style="display:flex;gap:6px;align-items:center"><input type="color" id="ct-codeHeader"
+                        value="#eaeef2"
+                        style="width:32px;height:28px;border:none;cursor:pointer;border-radius:4px"><input type="text"
+                        id="ct-codeHeader-t" class="ipt" style="font-size:11px;padding:4px 8px" value="#eaeef2"
+                        oninput="syncColor('codeHeader')"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style="text-align:right;margin-top:8px">
+              <button class="btn btn-p" onclick="saveConfig()">保存配置</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 订阅管理 -->
+        <div id="pg-subs" class="pg">
+          <div class="glass" style="padding:20px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <div>
+                <h3 style="font-size:16px;font-weight:700">订阅列表</h3>
+                <p style="font-size:12px;color:var(--text3);margin-top:2px">管理所有 GitHub 仓库订阅</p>
+              </div>
+              <button class="btn btn-s" onclick="doRefresh()">刷新</button>
+            </div>
+            <div id="sub-list" style="font-size:13px;color:var(--text3)">加载中...</div>
+          </div>
+        </div>
+
+        <!-- 添加订阅 -->
+        <div id="pg-add" class="pg">
+          <div class="glass" style="padding:20px;margin-bottom:16px">
+            <div class="sec-t">添加新订阅</div>
+            <div class="cfg-sec">
+              <div style="margin-bottom:12px">
+                <label style="font-size:12px;color:var(--text2)">仓库地址</label>
+                <input type="text" id="add-repo" class="ipt" placeholder="owner/repo，如 torvalds/linux">
+              </div>
+              <div style="margin-bottom:12px">
+                <label style="font-size:12px;color:var(--text2)">监控类型</label>
+                <div style="display:flex;gap:12px;margin-top:4px">
+                  <label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox"
+                      id="add-commits" class="chk" checked> Commits</label>
+                  <label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox"
+                      id="add-issues" class="chk" checked> Issues</label>
+                  <label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox"
+                      id="add-pulls" class="chk" checked> Pull Requests</label>
+                </div>
+              </div>
+              <div style="margin-bottom:12px">
+                <label style="font-size:12px;color:var(--text2)">推送群</label>
+                <div id="add-grp-picker" style="position:relative"></div>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <button class="btn btn-p" onclick="addSub()">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path
+                    d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z" />
+                </svg>
+                添加订阅
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 调试日志 -->
+        <div id="pg-logs" class="pg">
+          <div class="glass" style="padding:20px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <div>
+                <h3 style="font-size:16px;font-weight:700">调试日志</h3>
+                <p style="font-size:12px;color:var(--text3);margin-top:2px">实时查看插件运行日志</p>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <div style="display:flex;align-items:center;gap:6px"><span style="font-size:12px">调试</span>
+                  <div class="tgl" id="l-db" onclick="tg(this);tglDbg()"></div>
+                </div>
+                <button onclick="loadLogs()" class="btn btn-p" style="font-size:12px">刷新</button>
+                <button onclick="clrLogs()" class="btn btn-s" style="font-size:12px">清除</button>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:8px">
+              <button class="lfb active" onclick="fltLog('all',this)">全部</button>
+              <button class="lfb" onclick="fltLog('info',this)">INFO</button>
+              <button class="lfb" onclick="fltLog('debug',this)">DEBUG</button>
+              <button class="lfb" onclick="fltLog('warn',this)">WARN</button>
+              <button class="lfb" onclick="fltLog('error',this)">ERROR</button>
+            </div>
+            <div id="logC" class="log-c scr">
+              <p style="color:#64748b">加载中...</p>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+              <span style="font-size:10px;color:var(--text3)" id="logCnt">0 条</span>
+              <label
+                style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text3);cursor:pointer"><input
+                  type="checkbox" id="logAS" checked> 自动滚动</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- 自定义模板 -->
+        <div id="pg-tpl" class="pg">
+          <div class="glass" style="padding:20px;margin-bottom:16px">
+            <div style="margin-bottom:16px">
+              <h3 style="font-size:16px;font-weight:700;margin-bottom:4px">自定义 HTML 模板</h3>
+              <p style="font-size:12px;color:var(--text3)">为推送图片编写自定义 HTML 模板，留空则使用内置模板</p>
+            </div>
+            <div style="margin-bottom:12px">
+              <div class="sec-t">可用变量</div>
+              <div
+                style="font-size:12px;color:var(--text2);line-height:1.8;background:rgba(31,111,235,.04);padding:10px 14px;border-radius:8px;border:1px solid rgba(31,111,235,.1)">
+                <code>{{repo}}</code> 仓库名 · <code>{{count}}</code> 更新数量 · <code>{{type}}</code> 类型名 ·
+                <code>{{time}}</code> 当前时间<br>
+                <code>{{items}}</code> JSON 数组（需用 JS 解析渲染）<br>
+                <span style="color:var(--text3)">Commits items 字段: sha, sha7, message, author, date, url,
+                  files[{filename,status,additions,deletions,patch}]</span><br>
+                <span style="color:var(--text3)">Issues/PRs items 字段: number, title, state, action, author, created_at,
+                  url, labels[{name,color}]</span>
+              </div>
+            </div>
+            <div style="margin-bottom:16px">
+              <label style="font-size:12px;color:var(--text2);font-weight:600">选择模板类型</label>
+              <div style="display:flex;gap:6px;margin-top:6px">
+                <button class="lfb active" id="tpl-tab-commits" onclick="switchTpl('commits')">Commits</button>
+                <button class="lfb" id="tpl-tab-issues" onclick="switchTpl('issues')">Issues</button>
+                <button class="lfb" id="tpl-tab-pulls" onclick="switchTpl('pulls')">Pull Requests</button>
+              </div>
+            </div>
+            <div style="margin-bottom:12px">
+              <textarea id="tpl-editor" class="ipt"
+                style="min-height:300px;font-family:'Cascadia Code',Consolas,monospace;font-size:12px;line-height:1.6;resize:vertical;white-space:pre;tab-size:2"
+                placeholder="留空使用内置模板，输入完整 HTML 文档（含 <!DOCTYPE html>）..."></textarea>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:space-between;align-items:center">
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-p" onclick="saveTpl()">保存模板</button>
+                <button class="btn btn-s" onclick="clearTpl()">清空（恢复内置）</button>
+              </div>
+              <button class="btn btn-s" onclick="previewTpl()">预览效果</button>
+            </div>
+            <div id="tpl-preview" style="margin-top:16px;display:none">
+              <div class="sec-t">预览</div>
+              <div id="tpl-preview-frame"
+                style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#fff"></div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // 暗色模式
+    if (window.matchMedia('(prefers-color-scheme:dark)').matches) document.documentElement.classList.add('dark');
+    window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change', e => {
+      e.matches ? document.documentElement.classList.add('dark') : document.documentElement.classList.remove('dark');
+    });
+
+    const API = '../api';
+    // SVG 图标（替代 emoji，统一风格）
+    const I = {
+      dashboard: '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M0 1.75A.75.75 0 0 1 .75 1h14.5a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75H.75a.75.75 0 0 1-.75-.75Zm1.5.75v11h13v-11ZM6.25 4a.75.75 0 0 0-.75.75v6.5a.75.75 0 0 0 1.5 0v-6.5A.75.75 0 0 0 6.25 4Zm3.5 2a.75.75 0 0 0-.75.75v4.5a.75.75 0 0 0 1.5 0v-4.5A.75.75 0 0 0 9.75 6ZM3.5 9.75a.75.75 0 0 1 1.5 0v1.5a.75.75 0 0 1-1.5 0Zm9-1a.75.75 0 0 0-.75.75v1.75a.75.75 0 0 0 1.5 0V9.5a.75.75 0 0 0-.75-.75Z"/></svg>',
+      gear: '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0a8.2 8.2 0 0 1 .701.031C9.444.095 9.99.645 10.16 1.29l.288 1.107c.018.066.079.158.212.224.231.114.454.243.668.386.123.082.233.09.3.071L12.7 2.77c.63-.186 1.332.023 1.821.567a8.07 8.07 0 0 1 .695.695c.544.49.753 1.192.567 1.822l-.308 1.074c-.019.065-.01.175.071.299.143.213.272.437.386.668.066.133.158.194.224.212l1.107.288c.645.17 1.195.716 1.26 1.459a8.2 8.2 0 0 1 0 1.402c-.065.743-.615 1.29-1.26 1.46l-1.107.287c-.066.018-.158.079-.224.212a5.4 5.4 0 0 1-.386.668c-.082.123-.09.233-.071.3l.308 1.073c.186.63-.023 1.332-.567 1.822a8 8 0 0 1-.695.695c-.49.544-1.192.753-1.822.567l-1.073-.308c-.065-.019-.175-.01-.299.071a5.4 5.4 0 0 1-.668.386c-.133.066-.194.158-.212.224l-.288 1.107c-.17.645-.716 1.195-1.459 1.26a8.2 8.2 0 0 1-1.402 0c-.743-.065-1.29-.615-1.46-1.26l-.287-1.107c-.018-.066-.079-.158-.212-.224a5.4 5.4 0 0 1-.668-.386c-.123-.082-.233-.09-.3-.071l-1.073.308c-.63.186-1.332-.023-1.822-.567a8 8 0 0 1-.695-.695c-.544-.49-.753-1.192-.567-1.822l.308-1.073c.019-.065.01-.175-.071-.299a5.4 5.4 0 0 1-.386-.668c-.066-.133-.158-.194-.224-.212L1.29 9.84C.645 9.67.095 9.124.03 8.381a8.2 8.2 0 0 1 0-1.402C.095 6.236.645 5.69 1.29 5.52l1.107-.288c.066-.018.158-.079.224-.212.114-.231.243-.454.386-.668.082-.123.09-.233.071-.3L2.77 2.98c-.186-.63.023-1.332.567-1.822A8 8 0 0 1 4.032.463c.49-.544 1.192-.753 1.822-.567l1.073.308c.065.019.175.01.299-.071.213-.143.437-.272.668-.386.133-.066.194-.158.212-.224L8.38.416c.17-.645.716-1.195 1.459-1.26A8 8 0 0 1 8 0ZM5.5 8a2.5 2.5 0 1 0 5 0 2.5 2.5 0 0 0-5 0Z"/></svg>',
+      list: '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h4v4H2Zm6 1h6v2H8ZM2 8h4v4H2Zm6 1h6v2H8Z"/></svg>',
+      plus: '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M7.75 2a.75.75 0 0 1 .75.75V7h4.25a.75.75 0 0 1 0 1.5H8.5v4.25a.75.75 0 0 1-1.5 0V8.5H2.75a.75.75 0 0 1 0-1.5H7V2.75A.75.75 0 0 1 7.75 2Z"/></svg>',
+      log: '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V1.75a.25.25 0 0 0-.25-.25ZM3 4h10v1.5H3Zm0 3h10v1.5H3Zm0 3h7v1.5H3Z"/></svg>',
+      brush: '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M11.134 1.535c.7-.509 1.416-.942 2.076-1.155.649-.21 1.463-.267 2.069.34.603.601.568 1.411.368 2.07-.202.668-.624 1.39-1.125 2.096-1.011 1.424-2.496 2.987-3.775 4.249-1.098 1.084-2.132 1.839-3.04 2.3a3.74 3.74 0 0 1-1.055 3.217c-.431.431-1.065.691-1.657.861-.614.177-1.294.287-1.914.357A21 21 0 0 1 .797 16H.743l.007-.75H.749L.742 16a.75.75 0 0 1-.743-.742l.743-.008-.744.007v-.054a21 21 0 0 1 .13-2.284c.067-.628.176-1.317.356-1.94.174-.6.44-1.244.88-1.676a3.74 3.74 0 0 1 3.217-1.054c.466-.893 1.228-1.914 2.318-3.016 1.255-1.27 2.81-2.746 4.228-3.748ZM3.1 12.9c-.18.18-.345.503-.494 1.018-.131.453-.22.98-.284 1.527.547-.065 1.074-.153 1.528-.284.515-.15.837-.314 1.018-.494A2.26 2.26 0 0 0 5.5 13c0-.591-.234-1.157-.65-1.573A2.23 2.23 0 0 0 3.1 12.9Z"/></svg>',
+      save: '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M.143 2.31A1.75 1.75 0 0 1 1.75 1h10.5l2.75 2.75v10.5a1.75 1.75 0 0 1-1.75 1.75H1.75A1.75 1.75 0 0 1 0 14.25V3.56c0-.464.184-.91.513-1.237ZM1.75 2.5a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h.5V10A1.5 1.5 0 0 1 3.75 8.5h8.5A1.5 1.5 0 0 1 13.75 10v3.5h.5a.25.25 0 0 0 .25-.25V4.36L12.5 2.5ZM3.75 10v3.5h8.5V10H3.75ZM5 3.75a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5A.75.75 0 0 1 5 3.75Z"/></svg>',
+      check: '<svg width="14" height="14" viewBox="0 0 16 16" fill="#3fb950"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"/></svg>',
+      cross: '<svg width="14" height="14" viewBox="0 0 16 16" fill="#f85149"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"/></svg>',
+      warn: '<svg width="18" height="18" viewBox="0 0 16 16" fill="#d29922"><path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575ZM8 5a.75.75 0 0 0-.75.75v2.5a.75.75 0 0 0 1.5 0v-2.5A.75.75 0 0 0 8 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></svg>',
+      info: '<svg width="14" height="14" viewBox="0 0 16 16" fill="#58a6ff"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>',
+      clock: '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm7-3.25v2.992l2.028.812a.75.75 0 0 1-.557 1.392l-2.5-1A.75.75 0 0 1 7 8.25v-3.5a.75.75 0 0 1 1.5 0Z"/></svg>',
+      palette: '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0a8 8 0 1 0 4.25 14.78.75.75 0 0 0 .263-1.127 2.75 2.75 0 0 1 2.382-4.636.75.75 0 0 0 .788-.378A8 8 0 0 0 8 0Zm0 1.5a6.5 6.5 0 0 1 5.727 3.418 4.25 4.25 0 0 0-3.2 6.263A6.5 6.5 0 1 1 8 1.5Zm-3.5 6a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5Zm2-3.5a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5ZM9.75 5a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5Zm2 3a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5Z"/></svg>',
+      key: '<svg width="14" height="14" viewBox="0 0 16 16" fill="#d29922"><path d="M6.5 5.5a4 4 0 1 1 2.731 3.795l-1.512 1.512a.75.75 0 0 1-.53.22H6v1.223a.75.75 0 0 1-.75.75H4v1.25a.75.75 0 0 1-.75.75h-2.5A.75.75 0 0 1 0 14.25v-2.5a.75.75 0 0 1 .22-.53l4.085-4.086A4 4 0 0 1 6.5 5.5ZM9.5 3a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z"/></svg>',
+      lock: '<svg width="14" height="14" viewBox="0 0 16 16" fill="#8b949e"><path d="M4 4a4 4 0 0 1 8 0v2h.25c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 12.25 15h-8.5A1.75 1.75 0 0 1 2 13.25v-5.5C2 6.784 2.784 6 3.75 6H4Zm8.25 3.5h-8.5a.25.25 0 0 0-.25.25v5.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-5.5a.25.25 0 0 0-.25-.25ZM10.5 6V4a2.5 2.5 0 1 0-5 0v2Z"/></svg>',
+    };
+    let CFG = {}, SUBS = [], GL = [], logD = [], logFlt = 'all', logTmr = null;
+
+    function $ (id) { return document.getElementById(id); }
+    function esc (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+    function tg (el) { el.classList.toggle('on'); }
+    function stg (id, v) { const e = $(id); if (e) { if (v) e.classList.add('on'); else e.classList.remove('on'); } }
+    function gtg (id) { return $(id)?.classList.contains('on') || false; }
+
+    function toast (m, t = 'info') {
+      const c = $('tc'), icons = { success: I.check, error: I.cross, info: I.info };
+      const d = document.createElement('div'); d.className = 'toast';
+      d.innerHTML = `<span>${icons[t] || ''}</span><span>${m}</span>`;
+      c.appendChild(d); setTimeout(() => { d.style.opacity = '0'; setTimeout(() => d.remove(), 300); }, 3000);
+    }
+
+    async function api (path, body) {
+      const opt = body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {};
+      return (await fetch(API + path, opt)).json();
+    }
+
+    function go (pg, el) {
+      document.querySelectorAll('.pg').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.sb').forEach(s => s.classList.remove('active'));
+      $('pg-' + pg)?.classList.add('active'); el?.classList.add('active');
+      if (pg === 'dashboard') updDash(); if (pg === 'subs') renderSubs();
+      if (pg === 'logs') { loadLogs(); startLR(); stg('l-db', CFG.debug); } else stopLR();
+      if (pg === 'tpl') switchTpl(curTpl || 'commits');
+    }
+
+    function badge (id, on, y, n) {
+      const e = $(id); if (!e) return; e.textContent = on ? (y || '已配置') : (n || '未配置');
+      if (on) { e.style.background = 'rgba(26,127,55,.1)'; e.style.color = 'var(--green)'; }
+      else { e.style.background = 'rgba(139,148,158,.1)'; e.style.color = 'var(--text3)'; }
+    }
+
+    // ===== 群选择器组件 =====
+    function createGroupPicker (containerId, initialGroups) {
+      const container = $(containerId);
+      const selected = new Set((initialGroups || []).map(String));
+      const wrapper = document.createElement('div'); wrapper.style.position = 'relative';
+      const chipArea = document.createElement('div'); chipArea.className = 'chip-wrap';
+      const searchInput = document.createElement('input');
+      searchInput.className = 'ipt'; searchInput.placeholder = '搜索并选择群...'; searchInput.style.marginTop = '6px'; searchInput.style.fontSize = '12px';
+      const dropdown = document.createElement('div'); dropdown.className = 'grp-dropdown scr';
+      wrapper.appendChild(chipArea); wrapper.appendChild(searchInput); wrapper.appendChild(dropdown);
+      container.innerHTML = ''; container.appendChild(wrapper);
+
+      function renderChips () {
+        chipArea.innerHTML = '';
+        selected.forEach(gid => {
+          const g = GL.find(x => String(x.group_id) === gid);
+          const name = g ? ((g.group_name || '未命名') + '(' + gid + ')') : gid;
+          const chip = document.createElement('span'); chip.className = 'chip';
+          chip.innerHTML = `${esc(name)} <span class="chip-x" data-gid="${esc(gid)}">&times;</span>`;
+          chipArea.appendChild(chip);
+        });
+        if (!selected.size) { chipArea.innerHTML = '<span style="font-size:12px;color:var(--text3)">点击下方搜索添加群</span>'; }
+      }
+
+      chipArea.addEventListener('click', e => {
+        const x = e.target.closest('.chip-x');
+        if (x) { selected.delete(x.dataset.gid); renderChips(); renderDropdown(); }
+      });
+
+      function renderDropdown (filter = '') {
+        const f = filter.toLowerCase();
+        const items = GL.filter(g => {
+          const id = String(g.group_id), name = g.group_name || '';
+          return !selected.has(id) && (id.includes(f) || name.toLowerCase().includes(f));
+        });
+        if (!items.length) { dropdown.innerHTML = '<div style="padding:12px;text-align:center;font-size:12px;color:var(--text3)">' + (GL.length ? '无匹配结果' : '群列表为空') + '</div>'; return; }
+        dropdown.innerHTML = items.map(g => `<div class="grp-opt" data-gid="${g.group_id}"><span class="grp-name">${esc(g.group_name || '未命名')}</span><span class="grp-id">${g.group_id}</span></div>`).join('');
+      }
+
+      searchInput.addEventListener('focus', () => { dropdown.classList.add('show'); renderDropdown(searchInput.value); });
+      searchInput.addEventListener('input', () => renderDropdown(searchInput.value));
+      dropdown.addEventListener('click', e => {
+        const opt = e.target.closest('.grp-opt');
+        if (opt) { selected.add(String(opt.dataset.gid)); renderChips(); renderDropdown(searchInput.value); }
+      });
+      document.addEventListener('click', e => { if (!wrapper.contains(e.target)) dropdown.classList.remove('show'); });
+
+      renderChips();
+      return { getSelected: () => Array.from(selected), setSelected: (arr) => { selected.clear(); (arr || []).forEach(g => selected.add(String(g))); renderChips(); } };
+    }
+
+    let addPicker = null, editPicker = null;
+
+    // ===== 主人 QQ 管理 =====
+    let ownerList = [];
+    function renderOwners () {
+      const c = $('owner-chips');
+      if (!ownerList.length) { c.innerHTML = '<span style="font-size:12px;color:var(--text3)">未设置主人（所有人均可操作）</span>'; return; }
+      c.innerHTML = ownerList.map((qq, i) => `<span class="chip">${esc(qq)} <span class="chip-x" onclick="removeOwner(${i})">&times;</span></span>`).join('');
+    }
+    function addOwner () {
+      const v = $('owner-input').value.trim();
+      if (!v || !/^\d+$/.test(v)) { toast('请输入有效的 QQ 号', 'error'); return; }
+      if (ownerList.includes(v)) { toast('已存在', 'info'); return; }
+      ownerList.push(v);
+      $('owner-input').value = '';
+      renderOwners();
+    }
+    function removeOwner (i) { ownerList.splice(i, 1); renderOwners(); }
+
+    // ===== 多 Token 管理 =====
+    let tokenList = [];
+    let tokensModified = false;
+    function renderTokens () {
+      const c = $('token-list');
+      if (!tokenList.length) { c.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:6px 0">未添加 Token（匿名访问，速率限制 60/h）</div>'; return; }
+      c.innerHTML = tokenList.map((t, i) => `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <div class="ipt" style="flex:1;padding:6px 10px;font-size:12px;font-family:monospace;background:rgba(31,111,235,.04)">${t === '***' ? '••••••••••••••••' : esc(t.slice(0, 8)) + '••••••••'}</div>
+        <button class="btn btn-d" style="font-size:11px;padding:3px 8px" onclick="removeToken(${i})">删除</button>
+      </div>`).join('');
+    }
+    function addToken () {
+      const v = $('token-input').value.trim();
+      if (!v) { toast('请输入 Token', 'error'); return; }
+      tokenList.push(v);
+      tokensModified = true;
+      $('token-input').value = '';
+      renderTokens();
+    }
+    function removeToken (i) { tokenList.splice(i, 1); tokensModified = true; renderTokens(); }
+
+    // ===== 加载数据 =====
+    async function loadAll () {
+      try {
+        const [d, g] = await Promise.all([api('/config'), api('/groups')]);
+        if (!d.success) { toast('加载配置失败', 'error'); return; }
+        CFG = d.config || {}; SUBS = d.subscriptions || [];
+        if (g.success) GL = g.data || [];
+        fillConfig(); updDash(); renderSubs();
+        // 初始化群选择器
+        if (!addPicker) addPicker = createGroupPicker('add-grp-picker', []);
+        $('sDot').style.background = '#3fb950'; $('sTxt').textContent = '已连接';
+      } catch (e) { toast('连接失败: ' + e, 'error'); }
+    }
+
+    // ===== 主题相关 =====
+    function onThemeChange () {
+      const v = $('cfg-theme').value;
+      $('custom-theme-panel').style.display = v === 'custom' ? 'block' : 'none';
+    }
+    function syncColor (key) {
+      const cp = $('ct-' + key);
+      const tp = $('ct-' + key + '-t');
+      if (tp && tp.value.match(/^#[0-9a-fA-F]{6}$/)) cp.value = tp.value;
+    }
+    // 颜色选择器 → 文本框同步
+    document.addEventListener('input', e => {
+      if (e.target.id && e.target.id.startsWith('ct-') && !e.target.id.endsWith('-t') && e.target.type === 'color') {
+        const key = e.target.id.replace('ct-', '');
+        const tp = $('ct-' + key + '-t');
+        if (tp) tp.value = e.target.value;
+      }
+    });
+
+    function fillConfig () {
+      // 主人列表
+      ownerList = CFG.owners || [];
+      renderOwners();
+      stg('cfg-allowMemberSub', CFG.allowMemberSub);
+      // Token 列表
+      tokenList = [];
+      tokensModified = false;
+      const tc = CFG.tokenCount || 0;
+      for (let i = 0; i < tc; i++) tokenList.push('***');
+      renderTokens();
+      $('cfg-api').value = CFG.apiBase || 'https://api.github.com';
+      $('cfg-interval').value = String(CFG.interval || 30);
+      stg('cfg-debug', CFG.debug);
+      // 主题
+      $('cfg-theme').value = CFG.theme || 'light';
+      onThemeChange();
+      if (CFG.customTheme) {
+        const keys = ['bg', 'card', 'border', 'divider', 'text', 'textSub', 'textMuted', 'codeBg', 'codeHeader'];
+        keys.forEach(k => {
+          const v = CFG.customTheme[k];
+          if (v) { const cp = $('ct-' + k); const tp = $('ct-' + k + '-t'); if (cp) cp.value = v; if (tp) tp.value = v; }
+        });
+      }
+    }
+
+    function updDash () {
+      $('d-total').textContent = SUBS.length;
+      $('d-active').textContent = SUBS.filter(s => s.enabled).length;
+      const allG = new Set(); SUBS.forEach(s => (s.groups || []).forEach(g => allG.add(g)));
+      $('d-groups').textContent = allG.size;
+      $('d-interval').textContent = (CFG.interval || 30) + 's';
+      badge('d-token', CFG.tokenCount > 0, CFG.tokenCount + ' 个 Token', '未配置');
+      badge('d-debug', CFG.debug, '已开启', '已关闭');
+      // 检测 Puppeteer
+      checkPptr();
+      const rc = $('d-recent');
+      if (!SUBS.length) { rc.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3)">暂无订阅，点击左侧「添加订阅」开始</div>'; return; }
+      rc.innerHTML = SUBS.slice(0, 5).map(s => {
+        const grpNames = (s.groups || []).map(gid => { const g = GL.find(x => String(x.group_id) === String(gid)); return g ? ((g.group_name || '未命名') + '(' + gid + ')') : gid; });
+        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(208,215,222,.15)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:14px">${s.enabled ? I.check : I.cross}</span>
+        <span style="font-size:14px;font-weight:500">${esc(s.repo)}</span>
+        <span style="font-size:11px;color:var(--text3)">(${esc(s.branch || 'main')})</span>
+      </div>
+      <div>${(s.types || []).map(t => '<span class="type-badge type-' + t + '">' + t + '</span>').join('')}</div>
+    </div>`;
+      }).join('');
+    }
+
+    // ===== Puppeteer 状态 =====
+    async function checkPptr () {
+      try {
+        const d = await api('/puppeteer');
+        const ok = d.connected;
+        badge('d-pptr', ok, '已连接', '未连接');
+        const w = $('pptr-warn');
+        if (w) w.style.display = ok ? 'none' : 'block';
+      } catch {
+        badge('d-pptr', false, '', '未连接');
+        const w = $('pptr-warn');
+        if (w) w.style.display = 'block';
+      }
+    }
+
+    // ===== 订阅列表 =====
+    function renderSubs () {
+      const el = $('sub-list');
+      if (!SUBS.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">暂无订阅</div>'; return; }
+      el.innerHTML = SUBS.map(s => {
+        const grpNames = (s.groups || []).map(gid => { const g = GL.find(x => String(x.group_id) === String(gid)); return g ? ((g.group_name || '未命名') + '(' + gid + ')') : gid; });
+        return `<div class="sub-item">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:16px">${s.enabled ? I.check : I.cross}</span>
+          <div>
+            <div style="font-size:14px;font-weight:500">${esc(s.repo)} <span style="font-size:11px;color:var(--text3);font-weight:400">(${esc(s.branch || 'main')})</span></div>
+            <div style="margin-top:4px">
+              ${(s.types || []).map(t => '<span class="type-badge type-' + t + '">' + t + '</span>').join('')}
+              <span style="font-size:11px;color:var(--text3);margin-left:4px">→ ${grpNames.length ? esc(grpNames.join(', ')) : '<em>无推送群</em>'}</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-s" style="font-size:11px;padding:4px 10px" onclick="editSub('${esc(s.repo)}')">编辑</button>
+          <button class="btn btn-s" style="font-size:11px;padding:4px 10px" onclick="toggleSub('${esc(s.repo)}')">${s.enabled ? '关闭' : '开启'}</button>
+          <button class="btn btn-d" style="font-size:11px;padding:4px 10px" onclick="deleteSub('${esc(s.repo)}')">删除</button>
+        </div>
+      </div>
+    </div>`;
+      }).join('');
+    }
+
+    // ===== 配置保存 =====
+    async function saveConfig () {
+      const theme = $('cfg-theme').value;
+      // 只发送新增的 token（非 *** 的），仅在修改过时发送
+      const payload = {
+        apiBase: $('cfg-api').value,
+        interval: Number($('cfg-interval').value),
+        debug: gtg('cfg-debug'),
+        owners: ownerList,
+        allowMemberSub: gtg('cfg-allowMemberSub'),
+        theme,
+      };
+      if (tokensModified) {
+        payload.tokens = tokenList.filter(t => t !== '***');
+        tokensModified = false;
+      }
+      if (theme === 'custom') {
+        const keys = ['bg', 'card', 'border', 'divider', 'text', 'textSub', 'textMuted', 'codeBg', 'codeHeader'];
+        const ct = {};
+        keys.forEach(k => { ct[k] = $('ct-' + k + '-t').value || $('ct-' + k).value; });
+        payload.customTheme = ct;
+      }
+      const d = await api('/config', payload);
+      if (d.success) { toast('配置已保存', 'success'); await loadAll(); }
+      else toast('保存失败: ' + (d.error || ''), 'error');
+    }
+
+    // ===== 添加订阅 =====
+    async function addSub () {
+      const repo = $('add-repo').value.trim().toLowerCase();
+      if (!repo) { toast('请输入仓库地址', 'error'); return; }
+      if (!repo.includes('/')) { toast('格式错误，请使用 owner/repo', 'error'); return; }
+      // 前端去重
+      if (SUBS.some(s => s.repo.toLowerCase() === repo)) { toast('该仓库已订阅，请勿重复添加', 'error'); return; }
+      const types = [];
+      if ($('add-commits').checked) types.push('commits');
+      if ($('add-issues').checked) types.push('issues');
+      if ($('add-pulls').checked) types.push('pulls');
+      if (!types.length) { toast('请至少选择一种监控类型', 'error'); return; }
+      const groups = addPicker ? addPicker.getSelected() : [];
+      const d = await api('/sub/add', { repo, types, groups });
+      if (d.success) {
+        toast('订阅添加成功', 'success');
+        $('add-repo').value = '';
+        if (addPicker) addPicker.setSelected([]);
+        await loadAll();
+        document.querySelectorAll('.sb')[2]?.click();
+      } else toast('添加失败: ' + (d.error || ''), 'error');
+    }
+
+    // ===== 切换/删除 =====
+    async function toggleSub (repo) {
+      const d = await api('/sub/toggle', { repo });
+      if (d.success) { toast(d.enabled ? '已开启' : '已关闭', 'success'); await loadAll(); }
+      else toast('操作失败', 'error');
+    }
+    // ===== 自定义确认弹窗 =====
+    let _confirmCb = null;
+    function customConfirm (msg) {
+      return new Promise(resolve => {
+        _confirmCb = resolve;
+        $('confirm-msg').textContent = msg;
+        $('confirmModal').classList.add('show');
+      });
+    }
+    function confirmResolve (val) {
+      $('confirmModal').classList.remove('show');
+      if (_confirmCb) { _confirmCb(val); _confirmCb = null; }
+    }
+
+    async function deleteSub (repo) {
+      const ok = await customConfirm('确定删除订阅 ' + repo + ' ？');
+      if (!ok) return;
+      const d = await api('/sub/delete', { repo });
+      if (d.success) { toast('已删除', 'success'); await loadAll(); }
+      else toast('删除失败', 'error');
+    }
+
+    // ===== 编辑订阅 =====
+    function editSub (repo) {
+      const sub = SUBS.find(s => s.repo === repo); if (!sub) return;
+      $('edit-repo').value = sub.repo;
+      $('edit-branch').value = sub.branch || 'main';
+      $('edit-commits').checked = (sub.types || []).includes('commits');
+      $('edit-issues').checked = (sub.types || []).includes('issues');
+      $('edit-pulls').checked = (sub.types || []).includes('pulls');
+      editPicker = createGroupPicker('edit-grp-picker', sub.groups || []);
+      $('editModal').classList.add('show');
+    }
+    function closeEdit () { $('editModal').classList.remove('show'); }
+    async function saveEdit () {
+      const repo = $('edit-repo').value;
+      const types = [];
+      if ($('edit-commits').checked) types.push('commits');
+      if ($('edit-issues').checked) types.push('issues');
+      if ($('edit-pulls').checked) types.push('pulls');
+      const groups = editPicker ? editPicker.getSelected() : [];
+      const branch = $('edit-branch').value.trim() || 'main';
+      const d = await api('/sub/update', { repo, types, groups, branch });
+      if (d.success) { toast('订阅已更新', 'success'); closeEdit(); await loadAll(); }
+      else toast('更新失败: ' + (d.error || ''), 'error');
+    }
+
+    async function doRefresh () { await loadAll(); toast('已刷新', 'success'); }
+
+    async function pingGH () {
+      const el = $('d-ping');
+      el.innerHTML = '<span style="color:var(--accent)">正在测试连接...</span>';
+      try {
+        const d = await api('/ping');
+        if (d.success) {
+          const authLabel = d.authenticated ? I.key + ' 已认证' : I.lock + ' 未认证';
+          el.innerHTML = `<div style="padding:12px;border-radius:8px;background:rgba(26,127,55,.06);border:1px solid rgba(26,127,55,.15)">
+            <div style="font-size:14px;font-weight:600;color:var(--green);margin-bottom:8px">${I.check} 连接成功</div>
+            <div style="font-size:12px;color:var(--text2);line-height:2">
+              延迟: <b>${d.ms}ms</b> · HTTP ${d.status} · ${authLabel}
+            </div>
+          </div>`;
+        } else {
+          el.innerHTML = `<div style="padding:12px;border-radius:8px;background:rgba(207,34,46,.06);border:1px solid rgba(207,34,46,.15)">
+            <div style="font-size:14px;font-weight:600;color:var(--danger);margin-bottom:6px">${I.cross} 连接失败</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.8">
+              延迟: ${d.ms}ms${d.status ? ' · HTTP ' + d.status : ''}<br>
+              错误: ${esc(d.error || '未知错误')}
+            </div>
+            <div style="margin-top:8px;padding:8px;border-radius:6px;background:rgba(207,34,46,.06);font-size:11px;color:var(--text2)">💡 如果服务器无法访问 github.com，请在「基础配置」中设置 API 代理地址</div>
+          </div>`;
+        }
+      } catch (e) {
+        el.innerHTML = `<div style="padding:12px;border-radius:8px;background:rgba(207,34,46,.06);border:1px solid rgba(207,34,46,.15)">
+          <div style="font-size:14px;font-weight:600;color:var(--danger)">${I.cross} 请求失败</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">${esc(String(e))}</div>
+        </div>`;
+      }
+    }
+
+    // ===== 调试日志 =====
+    async function loadLogs () { try { const r = await api('/logs'); if (r.success) { logD = r.data || []; rndLogs(); } } catch { $('logC').innerHTML = '<p style="color:#ef4444">获取失败</p>'; } }
+    function rndLogs () { const c = $('logC'), f = logFlt === 'all' ? logD : logD.filter(l => l.level === logFlt); $('logCnt').textContent = `${f.length}/${logD.length} 条`; if (!f.length) { c.innerHTML = '<p style="color:#64748b">暂无日志</p>'; return; } c.innerHTML = f.map(l => { const t = new Date(l.time), ts = `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}:${String(t.getSeconds()).padStart(2, '0')}.${String(t.getMilliseconds()).padStart(3, '0')}`, lv = l.level.toUpperCase().padEnd(5); return `<div class="log-e log-${l.level}"><span class="lt">${ts}</span> <span class="ll">[${lv}]</span> <span class="lm">${esc(l.msg)}</span></div>`; }).join(''); if ($('logAS')?.checked) c.scrollTop = c.scrollHeight; }
+    function fltLog (lv, btn) { logFlt = lv; btn.parentElement.querySelectorAll('.lfb').forEach(b => b.classList.remove('active')); btn?.classList.add('active'); rndLogs(); }
+    async function clrLogs () { try { await api('/logs/clear', {}); logD = []; rndLogs(); toast('日志已清除', 'success'); } catch { toast('清除失败', 'error'); } }
+    function tglDbg () { const on = gtg('l-db'); api('/config', { debug: on }).then(() => { CFG.debug = on; toast(on ? '调试模式已开启' : '调试模式已关闭', 'info'); }).catch(() => { }); }
+    function startLR () { if (logTmr) return; logTmr = setInterval(loadLogs, 3000); }
+    function stopLR () { if (logTmr) { clearInterval(logTmr); logTmr = null; } }
+
+    // ===== 自定义模板 =====
+    let curTpl = 'commits';
+    function switchTpl (type) {
+      curTpl = type;
+      ['commits', 'issues', 'pulls'].forEach(t => {
+        const btn = $('tpl-tab-' + t);
+        if (btn) { if (t === type) btn.classList.add('active'); else btn.classList.remove('active'); }
+      });
+      const html = (CFG.customHTML && CFG.customHTML[type]) || '';
+      $('tpl-editor').value = html;
+      $('tpl-preview').style.display = 'none';
+    }
+    async function saveTpl () {
+      const val = $('tpl-editor').value.trim();
+      const ch = CFG.customHTML || {};
+      if (val) ch[curTpl] = val; else delete ch[curTpl];
+      const d = await api('/config', { customHTML: Object.keys(ch).length ? ch : {} });
+      if (d.success) { CFG.customHTML = ch; toast(val ? '模板已保存' : '已恢复内置模板', 'success'); }
+      else toast('保存失败', 'error');
+    }
+    function clearTpl () {
+      $('tpl-editor').value = '';
+      saveTpl();
+    }
+    function previewTpl () {
+      const html = $('tpl-editor').value.trim();
+      if (!html) { toast('模板为空，无法预览', 'info'); return; }
+      // 用示例数据替换变量
+      const sampleItems = curTpl === 'commits'
+        ? JSON.stringify([{ sha: 'abc1234567890', sha7: 'abc1234', message: '示例提交消息', author: 'test-user', date: new Date().toISOString(), url: '#', files: [{ filename: 'src/index.ts', status: 'modified', additions: 10, deletions: 3, patch: '@@ -1,3 +1,10 @@\n+added line\n-removed line' }] }])
+        : JSON.stringify([{ number: 1, title: '示例 Issue/PR 标题', state: 'open', action: 'opened', author: 'test-user', created_at: new Date().toISOString(), url: '#', labels: [{ name: 'bug', color: 'd73a4a' }] }]);
+      let rendered = html
+        .replace(/\{\{repo\}\}/g, 'owner/example-repo')
+        .replace(/\{\{count\}\}/g, '1')
+        .replace(/\{\{type\}\}/g, curTpl === 'commits' ? 'Commits' : curTpl === 'issues' ? 'Issues' : 'Pull Requests')
+        .replace(/\{\{time\}\}/g, new Date().toLocaleString('zh-CN'))
+        .replace(/\{\{items\}\}/g, sampleItems);
+      const frame = $('tpl-preview-frame');
+      frame.innerHTML = '';
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = 'width:100%;border:none;min-height:300px';
+      frame.appendChild(iframe);
+      iframe.contentDocument.open();
+      iframe.contentDocument.write(rendered);
+      iframe.contentDocument.close();
+      // 自适应高度
+      setTimeout(() => { try { iframe.style.height = iframe.contentDocument.body.scrollHeight + 20 + 'px'; } catch { } }, 200);
+      $('tpl-preview').style.display = 'block';
+    }
+
+    loadAll();
+  </script>
+</body>
+
+</html>
