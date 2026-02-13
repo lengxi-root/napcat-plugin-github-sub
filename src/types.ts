@@ -66,6 +66,8 @@ export interface PluginConfig {
     pulls?: string;
     comments?: string;
   };
+  /** 手动指定 WebUI 端口（不建议，一般自动获取） */
+  webuiPort?: number;
   /** 订阅列表 */
   subscriptions: Subscription[];
 }

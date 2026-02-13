@@ -979,6 +979,19 @@
               </div>
             </div>
             <div class="cfg-sec">
+              <div class="sec-t">WebUI 端口</div>
+              <div style="margin-bottom:12px">
+                <label style="font-size:12px;color:var(--text2)">NapCat WebUI 端口（Puppeteer 渲染需要）</label>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <input type="number" id="cfg-webuiPort" class="ipt" placeholder="如 6099" style="flex:1">
+                  <button class="btn sm" onclick="autoDetectPort()"
+                    style="white-space:nowrap;padding:6px 12px">自动提取</button>
+                </div>
+                <p style="font-size:11px;color:var(--text3);margin-top:4px">点击「自动提取」自动填入当前面板端口，保存后生效。未配置则 Puppeteer
+                  渲染不可用</p>
+              </div>
+            </div>
+            <div class="cfg-sec">
               <div class="sec-t">轮询设置</div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
                 <div>
@@ -1423,6 +1436,17 @@
       for (let i = 0; i < tc; i++) tokenList.push('***');
       renderTokens();
       $('cfg-api').value = CFG.apiBase || 'https://api.github.com';
+      $('cfg-webuiPort').value = CFG.webuiPort || '';
+      // 首次进入自动提取端口并写入配置
+      if (!CFG.webuiPort) {
+        const port = Number(location.port) || 6099;
+        $('cfg-webuiPort').value = port;
+        api('/config', { webuiPort: port }).then(() => {
+          CFG.webuiPort = port;
+          toast('已自动提取 WebUI 端口: ' + port, 'ok');
+          checkPptr();
+        });
+      }
       $('cfg-interval').value = String(CFG.interval || 30);
       stg('cfg-debug', CFG.debug);
       // 主题
@@ -1460,6 +1484,13 @@
       <div>${(s.types || []).map(t => '<span class="type-badge type-' + t + '">' + t + '</span>').join('')}</div>
     </div>`;
       }).join('');
+    }
+
+    // ===== 自动提取端口 =====
+    function autoDetectPort () {
+      const port = Number(location.port) || 6099;
+      $('cfg-webuiPort').value = port;
+      toast('已提取当前端口: ' + port + '，请点击保存生效', 'ok');
     }
 
     // ===== Puppeteer 状态 =====
@@ -1511,6 +1542,7 @@
       // 只发送新增的 token（非 *** 的），仅在修改过时发送
       const payload = {
         apiBase: $('cfg-api').value,
+        webuiPort: Number($('cfg-webuiPort').value) || 0,
         interval: Number($('cfg-interval').value),
         debug: gtg('cfg-debug'),
         owners: ownerList,

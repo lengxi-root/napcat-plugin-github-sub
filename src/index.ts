@@ -24,6 +24,7 @@ const plugin_init: PluginModule['plugin_init'] = async (ctx: NapCatPluginContext
     dataPath: ctx.dataPath || path.join(path.dirname(ctx.configPath), 'data'),
     configPath: ctx.configPath,
   });
+
   pluginState.log('info', 'GitHub 订阅插件初始化中...');
 
   // 配置 UI — 仅展示信息，引导用户前往 WebUI 配置
@@ -87,15 +88,15 @@ const plugin_init: PluginModule['plugin_init'] = async (ctx: NapCatPluginContext
 
   // 检测 Puppeteer 渲染服务
   try {
-    const port = (ctx.pluginManager?.config as any)?.port || 6099;
+    const port = pluginState.config.webuiPort || 6099;
     const res = await fetch(`http://127.0.0.1:${port}/plugin/napcat-plugin-puppeteer/api/status`, { signal: AbortSignal.timeout(5000) });
     if (res.ok) {
-      pluginState.log('info', 'Puppeteer 渲染服务已连接');
+      pluginState.log('info', `Puppeteer 渲染服务已连接 (端口: ${port})`);
     } else {
       pluginState.log('warn', `Puppeteer 渲染服务响应异常 (HTTP ${res.status})，图片推送将降级为文本`);
     }
   } catch {
-    pluginState.log('warn', '未检测到 napcat-plugin-puppeteer 插件，图片推送将降级为文本。请安装 napcat-plugin-puppeteer 以启用图片渲染');
+    pluginState.log('warn', '未检测到 napcat-plugin-puppeteer 插件，图片推送将降级为文本');
   }
 
   // 启动轮询

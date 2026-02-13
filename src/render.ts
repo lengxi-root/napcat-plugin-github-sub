@@ -58,7 +58,7 @@ const SVG = {
 /** 调用 puppeteer 插件渲染 HTML 为 base64 图片 */
 async function renderToBase64 (html: string): Promise<string | null> {
   try {
-    const port = (pluginState.networkConfig as any)?.port || 6099;
+    const port = pluginState.config.webuiPort || 6099;
     const host = `http://127.0.0.1:${port}`;
     const url = `${host}/plugin/napcat-plugin-puppeteer/api/render`;
 
@@ -173,7 +173,7 @@ function commitsHTML (repo: string, commits: CommitData[]): string {
     const time = fmtTime(c.commit.author.date);
     let diffHtml = '';
     if (c.files && c.files.length) {
-      const show = c.files.slice(0, 3);
+      const show = c.files.slice(0, 5);
       const rest = c.files.length - show.length;
       diffHtml = show.map(f => fileDiffHTML(f)).join('');
       if (rest > 0) diffHtml += `<div class="diff-more">还有 ${rest} 个文件变更</div>`;

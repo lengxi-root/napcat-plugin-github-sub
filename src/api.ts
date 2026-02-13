@@ -21,6 +21,7 @@ export function registerApiRoutes (router: any): void {
         theme: pluginState.config.theme || 'light',
         customTheme: pluginState.config.customTheme || null,
         customHTML: pluginState.config.customHTML || null,
+        webuiPort: pluginState.config.webuiPort || null,
       },
       subscriptions: pluginState.config.subscriptions,
     });
@@ -51,6 +52,15 @@ export function registerApiRoutes (router: any): void {
     }
     if (body.customHTML !== undefined && typeof body.customHTML === 'object' && body.customHTML !== null) {
       pluginState.config.customHTML = body.customHTML as any;
+    }
+    if (body.webuiPort !== undefined) {
+      const p = Number(body.webuiPort);
+      if (p > 0 && p <= 65535) {
+        pluginState.config.webuiPort = p;
+        pluginState.httpPort = p;
+      } else if (!p) {
+        delete pluginState.config.webuiPort;
+      }
     }
     pluginState.saveConfig();
     stopPoller();
@@ -161,7 +171,7 @@ export function registerApiRoutes (router: any): void {
   // Puppeteer 状态检测
   router.getNoAuth('/puppeteer', async (_: any, res: any) => {
     try {
-      const port = (pluginState.networkConfig as any)?.port || 6099;
+      const port = pluginState.config.webuiPort || 6099;
       const r = await fetch(`http://127.0.0.1:${port}/plugin/napcat-plugin-puppeteer/api/status`, { signal: AbortSignal.timeout(5000) });
       if (r.ok) {
         res.json({ success: true, connected: true });

@@ -206,6 +206,8 @@ jobs:
             const idx = data.plugins.findIndex(p => p.id === pluginId);
             if (idx >= 0) {
               console.log('📝 更新已有插件: ' + pluginId);
+              const existing = data.plugins[idx];
+              if (existing.updateTime) newPlugin.updateTime = existing.updateTime;
               data.plugins[idx] = newPlugin;
             } else {
               console.log('➕ 新增插件: ' + pluginId);
