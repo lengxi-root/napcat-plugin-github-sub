@@ -1,5 +1,5 @@
 // GitHub API 请求模块 - 使用 Events API（1 次请求获取所有事件类型）
-import type { GitHubEvent } from './types';
+import type { GitHubEvent, RepoInfo } from './types';
 import { pluginState } from './state';
 
 /** 轮询计数器，用于多 token 轮转 */
@@ -101,4 +101,30 @@ export async function fetchActionRuns (repo: string, perPage = 10): Promise<any[
   const runs = data?.workflow_runs || [];
   pluginState.debug(`[GitHub] ${repo}: ${runs.length} 条 Actions runs`);
   return runs;
+}
+
+/** 获取仓库信息 */
+export async function fetchRepoInfo (repo: string): Promise<RepoInfo | null> {
+  const base = pluginState.config.apiBase || 'https://api.github.com';
+  const url = `${base}/repos/${repo}`;
+  pluginState.debug(`[GitHub] 获取仓库信息: ${repo}`);
+  return await fetchJSON<RepoInfo>(url);
+}
+
+/** 获取仓库 README 内容（返回解码后的文本） */
+export async function fetchReadme (repo: string): Promise<string | null> {
+  const base = pluginState.config.apiBase || 'https://api.github.com';
+  const url = `${base}/repos/${repo}/readme`;
+  pluginState.debug(`[GitHub] 获取 README: ${repo}`);
+  const data = await fetchJSON<{ content: string; encoding: string; }>(url);
+  if (!data?.content) return null;
+  try {
+    // GitHub API 返回 base64 编码的内容
+    const decoded = Buffer.from(data.content, 'base64').toString('utf-8');
+    pluginState.debug(`[GitHub] README 解码成功，长度: ${decoded.length}`);
+    return decoded;
+  } catch (e) {
+    pluginState.log('warn', `README 解码失败: ${e}`);
+    return null;
+  }
 }

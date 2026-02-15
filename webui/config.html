@@ -768,7 +768,7 @@
         </div>
         <div>
           <h1 style="font-size:14px;font-weight:700;line-height:1.25">GitHub 订阅</h1>
-          <p style="font-size:10px;color:var(--text3)">GitSub v1.0.0</p>
+          <p style="font-size:10px;color:var(--text3)" id="sidebar-ver">GitSub</p>
         </div>
       </div>
       <nav style="flex:1;padding:4px 10px;overflow-y:auto" class="scr">
@@ -850,7 +850,7 @@
               </div>
               <div>
                 <h3 style="font-size:18px;font-weight:700">GitHub 订阅推送</h3>
-                <p style="font-size:12px;color:var(--text3)">GitSub v1.0.0 · by 冷曦</p>
+                <p style="font-size:12px;color:var(--text3)" id="dash-ver">GitSub · by 冷曦</p>
               </div>
             </div>
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
@@ -952,6 +952,16 @@
                     <p style="font-size:11px;color:var(--text3);margin-top:2px">关闭后仅主人可使用 订阅/取消/开启/关闭 指令，列表和帮助所有人可用</p>
                   </div>
                   <div class="tgl" id="cfg-allowMemberSub" onclick="tg(this)"></div>
+                </div>
+              </div>
+              <div>
+                <div class="cfg-row">
+                  <div>
+                    <span style="font-size:14px;font-weight:500">自动识别仓库链接</span>
+                    <p style="font-size:11px;color:var(--text3);margin-top:2px">开启后，群内发送 GitHub 仓库链接将自动渲染仓库信息卡片（含
+                      README）</p>
+                  </div>
+                  <div class="tgl" id="cfg-autoDetectRepo" onclick="tg(this)"></div>
                 </div>
               </div>
             </div>
@@ -1397,6 +1407,7 @@
         const [d, g] = await Promise.all([api('/config'), api('/groups')]);
         if (!d.success) { toast('加载配置失败', 'error'); return; }
         CFG = d.config || {}; SUBS = d.subscriptions || [];
+        if (d.version) { const v = 'v' + d.version; $('sidebar-ver').textContent = 'GitSub ' + v; $('dash-ver').textContent = 'GitSub ' + v + ' · by 冷曦'; }
         if (g.success) GL = g.data || [];
         fillConfig(); updDash(); renderSubs();
         // 初始化群选择器
@@ -1429,6 +1440,7 @@
       ownerList = CFG.owners || [];
       renderOwners();
       stg('cfg-allowMemberSub', CFG.allowMemberSub);
+      stg('cfg-autoDetectRepo', CFG.autoDetectRepo !== false);
       // Token 列表
       tokenList = [];
       tokensModified = false;
@@ -1547,6 +1559,7 @@
         debug: gtg('cfg-debug'),
         owners: ownerList,
         allowMemberSub: gtg('cfg-allowMemberSub'),
+        autoDetectRepo: gtg('cfg-autoDetectRepo'),
         theme,
       };
       if (tokensModified) {

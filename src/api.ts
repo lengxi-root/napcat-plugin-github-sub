@@ -9,6 +9,7 @@ export function registerApiRoutes (router: any): void {
   router.getNoAuth('/config', (_: any, res: any) => {
     res.json({
       success: true,
+      version: pluginState.version,
       config: {
         token: pluginState.config.token ? '***' : '',
         tokens: (pluginState.config.tokens || []).map(t => t ? '***' : ''),
@@ -18,6 +19,7 @@ export function registerApiRoutes (router: any): void {
         debug: pluginState.config.debug,
         owners: pluginState.config.owners || [],
         allowMemberSub: pluginState.config.allowMemberSub ?? false,
+        autoDetectRepo: pluginState.config.autoDetectRepo !== false,
         theme: pluginState.config.theme || 'light',
         customTheme: pluginState.config.customTheme || null,
         customHTML: pluginState.config.customHTML || null,
@@ -44,6 +46,7 @@ export function registerApiRoutes (router: any): void {
       pluginState.config.owners = (body.owners as string[]).map(String).filter(s => s.trim());
     }
     if (body.allowMemberSub !== undefined) pluginState.config.allowMemberSub = Boolean(body.allowMemberSub);
+    if (body.autoDetectRepo !== undefined) pluginState.config.autoDetectRepo = Boolean(body.autoDetectRepo);
     if (body.theme !== undefined && ['light', 'dark', 'custom'].includes(String(body.theme))) {
       pluginState.config.theme = String(body.theme) as 'light' | 'dark' | 'custom';
     }

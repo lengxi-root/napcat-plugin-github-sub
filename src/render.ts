@@ -1,5 +1,5 @@
 // 渲染模块 - 通过 puppeteer 插件截图 HTML 为 base64 图片
-import type { CommitData, IssueData, CommentData, ActionRunData, ThemeColors } from './types';
+import type { CommitData, IssueData, CommentData, ActionRunData, ThemeColors, RepoInfo } from './types';
 import { pluginState } from './state';
 
 /** 转义 HTML */
@@ -49,10 +49,14 @@ const SVG = {
   dotOpen: `<svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="#3fb950"/></svg>`,
   dotClosed: `<svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="#f85149"/></svg>`,
   dotMerged: `<svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="#a371f7"/></svg>`,
-  // comment icon (Octicons - comment-discussion)
   comment: `<svg width="20" height="20" viewBox="0 0 16 16" fill="#58a6ff"><path d="M1.75 1h8.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 10.25 10H7.061l-2.574 2.573A1.458 1.458 0 0 1 2 11.543V10h-.25A1.75 1.75 0 0 1 0 8.25v-5.5C0 1.784.784 1 1.75 1ZM1.5 2.75v5.5c0 .138.112.25.25.25h1a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h3.5a.25.25 0 0 0 .25-.25v-5.5a.25.25 0 0 0-.25-.25h-8.5a.25.25 0 0 0-.25.25Zm13 2a.25.25 0 0 0-.25-.25h-.5a.75.75 0 0 1 0-1.5h.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 14.25 12H14v1.543a1.458 1.458 0 0 1-2.487 1.03L9.22 12.28a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l2.22 2.22v-2.19a.75.75 0 0 1 .75-.75h1a.25.25 0 0 0 .25-.25Z"/></svg>`,
-  // actions icon (Octicons - play)
   actions: `<svg width="20" height="20" viewBox="0 0 16 16" fill="#d29922"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm4.879-2.773 4.264 2.559a.25.25 0 0 1 0 .428l-4.264 2.559A.25.25 0 0 1 6 10.559V5.442a.25.25 0 0 1 .379-.215Z"/></svg>`,
+  // 分隔点（替代 · 中点字符）
+  sep: `<svg width="4" height="4" viewBox="0 0 4 4" style="display:inline-block;vertical-align:middle;margin:0 5px"><circle cx="2" cy="2" r="2" fill="currentColor" opacity="0.4"/></svg>`,
+  // 用户图标（替代 @ 字符）
+  user: `<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" style="display:inline-block;vertical-align:-1px;margin-right:1px;opacity:0.5"><path d="M10.561 8.073a6.005 6.005 0 0 1 3.432 5.142.75.75 0 1 1-1.498.07 4.5 4.5 0 0 0-8.99 0 .75.75 0 0 1-1.498-.07 6.004 6.004 0 0 1 3.431-5.142 3.999 3.999 0 1 1 5.123 0ZM10.5 5a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z"/></svg>`,
+  // 列表项圆点（替代 • 字符）
+  bullet: `<svg width="6" height="6" viewBox="0 0 6 6" style="display:inline-block;vertical-align:middle;margin-right:6px"><circle cx="3" cy="3" r="3" fill="currentColor" opacity="0.4"/></svg>`,
 };
 
 /** 调用 puppeteer 插件渲染 HTML 为 base64 图片 */
@@ -131,7 +135,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,san
     <span class="badge">${count} 条新更新</span>
   </div>
   <div class="body">${content}</div>
-  <div class="footer">GitHub Subscription · ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}</div>
+  <div class="footer">GitHub Subscription ${SVG.sep} ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}</div>
 </div>
 </body></html>`;
 }
@@ -236,7 +240,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,san
     <span class="badge">${count} 条新更新</span>
   </div>
   <div class="md">${mdBody}</div>
-  <div class="ft">GitHub Subscription · ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}</div>
+  <div class="ft">GitHub Subscription ${SVG.sep} ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}</div>
 </div>
 </body></html>`;
 }
@@ -288,10 +292,10 @@ function mdBodyToHTML (raw: string | null, maxLen = 3000): string {
   // 删除线 ~~text~~
   s = s.replace(/~~(.+?)~~/g, '<s>$1</s>');
 
-  // 无序列表 - item
-  s = s.replace(/^[-*]\s+(.+)$/gm, '<div style="padding-left:16px">• $1</div>');
-  // 有序列表 1. item
-  s = s.replace(/^\d+\.\s+(.+)$/gm, (_, content) => `<div style="padding-left:16px">· ${content}</div>`);
+  // 无序列表 - item（使用 CSS 圆点替代 • 字符）
+  s = s.replace(/^[-*]\s+(.+)$/gm, '<div style="padding-left:16px;display:flex;align-items:baseline;gap:0"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;opacity:0.4;flex-shrink:0;margin-right:6px;margin-top:6px"></span><span>$1</span></div>');
+  // 有序列表 1. item（使用 CSS 圆点替代 · 字符）
+  s = s.replace(/^\d+\.\s+(.+)$/gm, (_, content) => `<div style="padding-left:16px;display:flex;align-items:baseline;gap:0"><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:currentColor;opacity:0.35;flex-shrink:0;margin-right:6px;margin-top:7px"></span><span>${content}</span></div>`);
 
   // GitHub emoji :name: → 移除冒号显示名称（服务器无 emoji 字体）
   s = s.replace(/:([a-z0-9_+-]+):/g, '[$1]');
@@ -326,7 +330,7 @@ function issuesHTML (repo: string, issues: IssueData[]): string {
     const labels = i.labels.map(l => `<span class="lbl" style="background:#${l.color}20;color:#${l.color};border:1px solid #${l.color}40">${esc(l.name)}</span>`).join('');
     const body = i.body ? `<blockquote>${mdBodyToHTML(i.body, 3000)}</blockquote>` : '';
     return `<h3><code>#${i.number}</code> ${title} ${tag}${labels}</h3>
-<p class="meta">@${author} · ${time}</p>${body}`;
+<p class="meta">${SVG.user}${author} ${SVG.sep} ${time}</p>${body}`;
   }).join('<hr>');
   return wrapMarkdownHTML(repo, 'Issues', '#8957e5', SVG.issue, issues.length, rows);
 }
@@ -339,7 +343,7 @@ function pullsHTML (repo: string, pulls: IssueData[]): string {
     const time = fmtTime(p.created_at);
     const tag = mdActionTag(p.action, p.state);
     return `<h3><code>#${p.number}</code> ${title} ${tag}</h3>
-<p class="meta">@${author} · ${time}</p>`;
+<p class="meta">${SVG.user}${author} ${SVG.sep} ${time}</p>`;
   }).join('<hr>');
   return wrapMarkdownHTML(repo, 'Pull Requests', '#db6d28', SVG.pr, pulls.length, rows);
 }
@@ -364,7 +368,7 @@ function commentsHTML (repo: string, comments: CommentData[]): string {
       const author = esc(c.user.login);
       const time = fmtTime(c.created_at);
       const body = mdBodyToHTML(c.body, 3000);
-      html += `<p class="meta">@${author} · ${time}</p><blockquote>${body}</blockquote>`;
+      html += `<p class="meta">${SVG.user}${author} ${SVG.sep} ${time}</p><blockquote>${body}</blockquote>`;
     }
     sections.push(html);
   }
@@ -390,9 +394,101 @@ function actionsHTML (repo: string, runs: ActionRunData[]): string {
     const c = cMap[conclusion] || { text: conclusion, cls: '' };
     const tag = `<span class="tag ${c.cls}">${esc(c.text)}</span>`;
     return `<h3><code>#${r.run_number}</code> ${name} ${tag}</h3>
-<p class="meta">@${actor} · ${esc(r.event)} · ${esc(r.head_branch)} · ${time}</p>`;
+<p class="meta">${SVG.user}${actor} ${SVG.sep} ${esc(r.event)} ${SVG.sep} ${esc(r.head_branch)} ${SVG.sep} ${time}</p>`;
   }).join('<hr>');
   return wrapMarkdownHTML(repo, 'Actions', '#d29922', SVG.actions, runs.length, rows);
+}
+
+/** 格式化数字（k/m 缩写） */
+function fmtNum (n: number): string {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'm';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+  return String(n);
+}
+
+/** 渲染仓库信息卡片 HTML */
+function repoCardHTML (repo: RepoInfo, readme: string | null): string {
+  const t = getTheme();
+  const desc = repo.description ? esc(truncate(repo.description, 120)) : '<span style="opacity:0.5">No description</span>';
+  const lang = repo.language ? esc(repo.language) : '';
+  const license = repo.license?.name ? esc(repo.license.name) : '';
+  const topics = (repo.topics || []).slice(0, 8).map(tp =>
+    `<span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;background:rgba(31,111,235,0.1);color:#1f6feb;border:1px solid rgba(31,111,235,0.2);margin:2px 3px 2px 0">${esc(tp)}</span>`
+  ).join('');
+
+  // README 渲染（截断到合理长度）
+  let readmeHTML = '';
+  if (readme) {
+    const truncatedReadme = readme.length > 6000 ? readme.slice(0, 6000) + '\n\n...(README 内容过长已截断)' : readme;
+    readmeHTML = `
+    <div style="border-top:1px solid ${t.border};padding:16px 20px">
+      <div style="font-size:13px;font-weight:600;color:${t.text};margin-bottom:10px;display:flex;align-items:center;gap:6px">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="${t.textSub}"><path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.744 3.744 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.06 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z"/></svg>
+        README.md
+      </div>
+      <div style="font-size:13px;line-height:1.7;color:${t.text};word-break:break-word">${mdBodyToHTML(truncatedReadme, 6000)}</div>
+    </div>`;
+  }
+
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:${t.bg};color:${t.text};padding:20px;width:600px}
+.card{background:${t.card};border:1px solid ${t.border};border-radius:12px;overflow:hidden}
+</style></head><body>
+<div class="card">
+  <div style="padding:16px 20px;border-bottom:1px solid ${t.border};display:flex;align-items:center;gap:12px">
+    <div style="width:40px;height:40px;background:#24292f;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <svg width="22" height="22" viewBox="0 0 16 16" fill="#fff"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"/></svg>
+    </div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:16px;font-weight:600;color:#1f6feb">${esc(repo.full_name)}</div>
+      <div style="font-size:13px;color:${t.textSub};margin-top:2px;line-height:1.4">${desc}</div>
+    </div>
+  </div>
+
+  <div style="padding:12px 20px;display:flex;flex-wrap:wrap;gap:16px;border-bottom:1px solid ${t.border};font-size:12px;color:${t.textSub}">
+    <span style="display:flex;align-items:center;gap:4px">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="#e3b341"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg>
+      ${fmtNum(repo.stargazers_count)}
+    </span>
+    <span style="display:flex;align-items:center;gap:4px">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="${t.textSub}"><path d="M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75v-.878a2.25 2.25 0 1 1 1.5 0v.878a2.25 2.25 0 0 1-2.25 2.25h-1.5v2.128a2.251 2.251 0 1 1-1.5 0V8.5h-1.5A2.25 2.25 0 0 1 3.5 6.25v-.878a2.25 2.25 0 1 1 1.5 0ZM5 3.25a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Zm6.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm-3 8.75a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Z"/></svg>
+      ${fmtNum(repo.forks_count)}
+    </span>
+    <span style="display:flex;align-items:center;gap:4px">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="${t.textSub}"><path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"/></svg>
+      ${fmtNum(repo.open_issues_count)} issues
+    </span>
+    ${lang ? `<span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:#3178c6;display:inline-block"></span>${esc(lang)}</span>` : ''}
+    ${license ? `<span style="display:flex;align-items:center;gap:4px"><svg width="14" height="14" viewBox="0 0 16 16" fill="${t.textSub}"><path d="M8.75.75V2h.985c.304 0 .603.08.867.231l1.29.736c.038.022.08.033.124.033h2.234a.75.75 0 0 1 0 1.5h-.427l2.111 4.692a.75.75 0 0 1-.154.838l-.53-.53.529.531-.001.002-.002.002-.006.006-.006.005-.01.01a3.2 3.2 0 0 1-.149.135 4.5 4.5 0 0 1-.488.365c-.431.278-1.09.558-1.942.558-.852 0-1.511-.28-1.942-.558a4.5 4.5 0 0 1-.488-.365 3.2 3.2 0 0 1-.15-.136l-.01-.01-.005-.005a.75.75 0 0 1-.154-.838L12.178 4.5h-.162c-.305 0-.604-.079-.868-.231l-1.29-.736a.245.245 0 0 0-.124-.033H8.75V13h2.5a.75.75 0 0 1 0 1.5h-6.5a.75.75 0 0 1 0-1.5h2.5V3.5h-.984a.245.245 0 0 0-.124.033l-1.29.736c-.264.152-.563.231-.868.231h-.162l2.112 4.692a.75.75 0 0 1-.154.838l-.53-.53.529.531-.001.002-.002.002-.006.006-.006.005-.01.01a3.2 3.2 0 0 1-.149.135 4.5 4.5 0 0 1-.488.365c-.431.278-1.09.558-1.942.558-.852 0-1.511-.28-1.942-.558a4.5 4.5 0 0 1-.488-.365 3.2 3.2 0 0 1-.15-.136l-.01-.01-.005-.005a.75.75 0 0 1-.154-.838L3.822 4.5h-.427a.75.75 0 0 1 0-1.5h2.234a.249.249 0 0 0 .125-.033l1.29-.736c.264-.152.563-.231.867-.231h.985V.75a.75.75 0 0 1 1.5 0Z"/></svg>${esc(license)}</span>` : ''}
+  </div>
+
+  ${topics ? `<div style="padding:10px 20px;border-bottom:1px solid ${t.border}">${topics}</div>` : ''}
+
+  ${readmeHTML}
+
+  <div style="padding:10px 20px;border-top:1px solid ${t.border};text-align:center;font-size:11px;color:${t.textMuted}">
+    GitHub Repo Card ${SVG.sep} ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}
+  </div>
+</div>
+</body></html>`;
+}
+
+/** 渲染仓库信息卡片 */
+export async function renderRepoCard (repo: RepoInfo, readme: string | null): Promise<string | null> {
+  return renderToBase64(repoCardHTML(repo, readme));
+}
+
+/** 仓库信息文本摘要（降级用） */
+export function repoSummary (repo: RepoInfo): string {
+  const lines = [
+    `📦 ${repo.full_name}`,
+    repo.description || '',
+    `⭐ ${repo.stargazers_count} | 🍴 ${repo.forks_count} | 📝 ${repo.open_issues_count} issues`,
+    repo.language ? `语言: ${repo.language}` : '',
+    `🔗 ${repo.html_url}`,
+  ].filter(Boolean);
+  return lines.join('\n');
 }
 
 /** 文本摘要（降级用） */

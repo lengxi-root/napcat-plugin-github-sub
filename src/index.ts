@@ -9,6 +9,8 @@ import { pluginState } from './state';
 import { handleCommand } from './commands';
 import { registerApiRoutes } from './api';
 import { startPoller, stopPoller } from './poller';
+import { fetchRepoInfo, fetchReadme } from './github';
+import { renderRepoCard, repoSummary } from './render';
 
 export let plugin_config_ui: PluginConfigSchema = [];
 
@@ -39,7 +41,7 @@ const plugin_init: PluginModule['plugin_init'] = async (ctx: NapCatPluginContext
                 <svg width="20" height="20" viewBox="0 0 16 16" fill="#fff"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
               </div>
               <div>
-                <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #374151;">GitHub 订阅推送 v1.0.0</h3>
+                <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #374151;">GitHub 订阅推送 v${pluginState.version}</h3>
                 <p style="margin: 2px 0 0; font-size: 12px; color: #9ca3af;">napcat-plugin-github-sub | 作者: 冷曦</p>
               </div>
             </div>
@@ -125,17 +127,52 @@ const plugin_onmessage: PluginModule['plugin_onmessage'] = async (ctx: NapCatPlu
   if (event.post_type !== 'message') return;
   const raw = (event.raw_message || '').trim();
 
-  // 匹配前缀
+  // 匹配前缀指令
   const match = raw.match(new RegExp(`^${PREFIX}\\s*(.*)`, 'is'));
-  if (!match) return;
+  if (match) {
+    const cmd = match[1].trim();
+    const handled = await handleCommand(event, cmd, ctx);
 
-  const cmd = match[1].trim();
-  const handled = await handleCommand(event, cmd, ctx);
+    // 如果添加了新订阅且轮询未启动，启动轮询
+    if (handled && pluginState.config.subscriptions.length > 0) {
+      stopPoller();
+      startPoller();
+    }
+    return;
+  }
 
-  // 如果添加了新订阅且轮询未启动，启动轮询
-  if (handled && pluginState.config.subscriptions.length > 0) {
-    stopPoller();
-    startPoller();
+  // 自动识别 GitHub 仓库链接
+  if (!pluginState.config.autoDetectRepo) return;
+  const repoMatch = raw.match(/https?:\/\/github\.com\/([a-zA-Z0-9\-_.]+\/[a-zA-Z0-9\-_.]+)/);
+  if (!repoMatch) return;
+
+  const repoName = repoMatch[1].replace(/\.git$/, '');
+  pluginState.debug(`[自动识别] 检测到 GitHub 仓库链接: ${repoName}`);
+
+  try {
+    const repoInfo = await fetchRepoInfo(repoName);
+    if (!repoInfo) {
+      pluginState.debug(`[自动识别] 获取仓库信息失败: ${repoName}`);
+      return;
+    }
+
+    const readme = await fetchReadme(repoName);
+    const base64 = await renderRepoCard(repoInfo, readme);
+    const fallback = repoSummary(repoInfo);
+
+    const msg: unknown[] = base64
+      ? [{ type: 'image', data: { file: `base64://${base64}` } }]
+      : [{ type: 'text', data: { text: fallback } }];
+
+    if (event.message_type === 'group' && event.group_id) {
+      await ctx.actions.call('send_group_msg', { group_id: event.group_id, message: msg } as never, ctx.adapterName, ctx.pluginManager.config).catch(() => { });
+    } else {
+      await ctx.actions.call('send_private_msg', { user_id: event.user_id, message: msg } as never, ctx.adapterName, ctx.pluginManager.config).catch(() => { });
+    }
+
+    pluginState.debug(`[自动识别] 仓库卡片已发送: ${repoName}`);
+  } catch (e) {
+    pluginState.log('error', `[自动识别] 处理仓库链接失败: ${repoName}, ${e}`);
   }
 };
 

@@ -68,6 +68,8 @@ export interface PluginConfig {
   };
   /** 手动指定 WebUI 端口（不建议，一般自动获取） */
   webuiPort?: number;
+  /** 自动识别 GitHub 仓库链接并渲染为图片 */
+  autoDetectRepo: boolean;
   /** 订阅列表 */
   subscriptions: Subscription[];
 }
@@ -144,6 +146,23 @@ export interface CommentData {
   source: 'issue' | 'pull_request';
 }
 
+/** GitHub 仓库信息 */
+export interface RepoInfo {
+  full_name: string;
+  description: string | null;
+  html_url: string;
+  stargazers_count: number;
+  forks_count: number;
+  open_issues_count: number;
+  language: string | null;
+  license: { name: string; } | null;
+  owner: { login: string; avatar_url: string; };
+  created_at: string;
+  updated_at: string;
+  topics: string[];
+  default_branch: string;
+}
+
 /** GitHub Actions workflow run 数据 */
 export interface ActionRunData {
   id: number;
@@ -158,4 +177,40 @@ export interface ActionRunData {
   actor: { login: string; avatar_url: string; };
   event: string;
   run_number: number;
+
+  /** GitHub 仓库信息 */
+  export interface RepoInfo {
+  full_name: string;
+  description: string | null;
+  html_url: string;
+  stargazers_count: number;
+  forks_count: number;
+  open_issues_count: number;
+  language: string | null;
+  license: { name: string; } | null;
+  owner: { login: string; avatar_url: string; };
+  created_at: string;
+  updated_at: string;
+  topics: string[];
+  default_branch: string;
 }
+
+
+}
+/** GitHub 仓库信息 */
+export interface RepoInfo {
+  full_name: string;
+  description: string | null;
+  html_url: string;
+  stargazers_count: number;
+  forks_count: number;
+  open_issues_count: number;
+  language: string | null;
+  license: { name: string; } | null;
+  owner: { login: string; avatar_url: string; };
+  created_at: string;
+  updated_at: string;
+  topics: string[];
+  default_branch: string;
+}
+

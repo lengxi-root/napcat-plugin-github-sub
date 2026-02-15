@@ -10,5 +10,6 @@ export const DEFAULT_CONFIG: PluginConfig = {
   owners: [],
   allowMemberSub: true,
   theme: 'light',
+  autoDetectRepo: true,
   subscriptions: [],
 };
